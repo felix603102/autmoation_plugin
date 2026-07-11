@@ -13,5 +13,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getStatusBasePath: () => ipcRenderer.invoke('status:getBasePath'),
   setStatusBasePath: (basePath) => ipcRenderer.invoke('status:setBasePath', basePath),
   loadTaskStatus: (file) => ipcRenderer.invoke('status:load', file),
-  saveTaskStatus: (file, tasksMap) => ipcRenderer.invoke('status:save', file, tasksMap),
+  saveTaskStatus: (file, tasksMap, date) =>
+    ipcRenderer.invoke('status:save', file, tasksMap, date),
 });
