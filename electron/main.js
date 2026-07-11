@@ -106,26 +106,45 @@ ipcMain.handle('status:setBasePath', (_event, basePath) => {
   store.set(STATUS_DIR_KEY, basePath);
 });
 
-// Load task completion status for a timeline. Returns a map of taskId -> boolean.
+// Load task completion status for a timeline. Returns { date?: string, tasks: Record<string,boolean> }.
 ipcMain.handle('status:load', async (_event, file) => {
   const filePath = getStatusFilePath(file);
   try {
-    if (!fs.existsSync(filePath)) return {};
+    if (!fs.existsSync(filePath)) return { date: undefined, tasks: {} };
     const raw = fs.readFileSync(filePath, 'utf-8');
     const data = JSON.parse(raw);
-    return data.tasks ?? {};
+    return {
+      date: typeof data.date === 'string' ? data.date : undefined,
+      tasks: data.tasks ?? {},
+    };
   } catch (err) {
     console.error(`[status:load] failed for ${file}:`, err);
-    return {};
+    return { date: undefined, tasks: {} };
   }
 });
 
-// Save task completion status for a timeline.
-ipcMain.handle('status:save', async (_event, file, tasksMap) => {
+// Save task completion status for a timeline, preserving any existing date.
+ipcMain.handle('status:save', async (_event, file, tasksMap, date) => {
   const filePath = getStatusFilePath(file);
   try {
+    let payload = { tasks: tasksMap };
+    if (date === undefined) {
+      // Preserve an existing date if caller did not provide one.
+      try {
+        if (fs.existsSync(filePath)) {
+          const existing = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+          if (typeof existing.date === 'string') {
+            payload = { ...payload, date: existing.date };
+          }
+        }
+      } catch {
+        // ignore corrupt existing file
+      }
+    } else if (date !== null) {
+      payload = { ...payload, date };
+    }
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify({ tasks: tasksMap }, null, 2));
+    fs.writeFileSync(filePath, JSON.stringify(payload, null, 2));
   } catch (err) {
     console.error(`[status:save] failed for ${file}:`, err);
     throw err;

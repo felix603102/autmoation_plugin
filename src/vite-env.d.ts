@@ -9,6 +9,11 @@ export interface ScriptResult {
 
 export type TaskStatusMap = Record<string, boolean>;
 
+export interface TaskStatusFile {
+  date?: string;
+  tasks: TaskStatusMap;
+}
+
 export interface ElectronAPI {
   getVersions: () => Promise<{
     app: string;
@@ -20,8 +25,12 @@ export interface ElectronAPI {
   runTaskScript: (taskId: string) => Promise<ScriptResult>;
   getStatusBasePath: () => Promise<string>;
   setStatusBasePath: (basePath: string) => Promise<void>;
-  loadTaskStatus: (file: string) => Promise<TaskStatusMap>;
-  saveTaskStatus: (file: string, tasksMap: TaskStatusMap) => Promise<void>;
+  loadTaskStatus: (file: string) => Promise<TaskStatusFile>;
+  saveTaskStatus: (
+    file: string,
+    tasksMap: TaskStatusMap,
+    date?: string | null,
+  ) => Promise<void>;
 }
 
 declare global {

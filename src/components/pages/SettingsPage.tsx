@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Folder } from 'lucide-react';
 import { useTaskStatus } from '../../contexts/TaskStatusContext';
+import { TIMELINES_BY_FILE } from '../../hooks/useTimelines';
+import type { TimelineData } from '../../types';
 
 /**
  * Settings page. Lets the user choose a profile directory (via a native dialog
  * exposed through the preload bridge) and shows runtime version info.
  */
 export function SettingsPage() {
-  const { saveAll, resetAll } = useTaskStatus();
+  const { saveAll, resetAll, saveDate } = useTaskStatus();
   const [profileDir, setProfileDir] = useState<string>('Not set');
   const [statusDir, setStatusDir] = useState<string>('Loading…');
+  const [dates, setDates] = useState<Record<string, string>>({});
   const [versions, setVersions] = useState<{
     app: string;
     electron: string;
@@ -17,11 +20,18 @@ export function SettingsPage() {
     node: string;
   } | null>(null);
 
-  // Fetch runtime versions and current status directory from the main process.
+  // Fetch runtime versions, status path, and custom timeline dates on mount.
   useEffect(() => {
     // Guard for running the renderer outside Electron (e.g. `vite preview`).
     window.electronAPI?.getVersions().then(setVersions).catch(() => {});
     window.electronAPI?.getStatusBasePath().then(setStatusDir).catch(() => {});
+
+    const initialDates: Record<string, string> = {};
+    const loads = Object.keys(TIMELINES_BY_FILE).map(async (file) => {
+      const saved = await window.electronAPI?.loadTaskStatus(file);
+      if (saved?.date) initialDates[file] = saved.date;
+    });
+    Promise.all(loads).then(() => setDates(initialDates)).catch(() => {});
   }, []);
 
   const chooseDirectory = async () => {
@@ -53,6 +63,12 @@ export function SettingsPage() {
     await resetAll();
     // Reload so the Timeline page reflects the reset state.
     window.location.reload();
+  };
+
+  const updateDate = async (file: string, value: string) => {
+    const next = { ...dates, [file]: value };
+    setDates(next);
+    await saveDate(file, value || null);
   };
 
   return (
@@ -87,6 +103,22 @@ export function SettingsPage() {
         <p className="mt-3 break-all text-xs text-muted">Status path: {statusDir}</p>
       </div>
 
+      {/* Timeline dates */}
+      <div className="card mt-4 max-w-2xl p-6">
+        <div className="mb-4 text-sm font-semibold text-ink">Timeline Dates</div>
+        <div className="space-y-3">
+          {Object.entries(TIMELINES_BY_FILE).map(([file, timeline]) => (
+            <TimelineDateRow
+              key={file}
+              file={file}
+              timeline={timeline}
+              date={dates[file] ?? timeline.date}
+              onChange={(value) => updateDate(file, value)}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Runtime versions */}
       {versions && (
         <div className="card mt-4 max-w-2xl p-6">
@@ -110,5 +142,33 @@ function Row({ label, value }: { label: string; value: string }) {
       <dt className="text-muted">{label}</dt>
       <dd className="font-mono text-ink">{value}</dd>
     </>
+  );
+}
+
+/** A single timeline row with a date input. */
+function TimelineDateRow({
+  file,
+  timeline,
+  date,
+  onChange,
+}: {
+  file: string;
+  timeline: TimelineData;
+  date: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-ink">{timeline.day}</div>
+        <div className="text-xs text-muted">{file}</div>
+      </div>
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-md border border-hairline px-2 py-1 text-sm text-ink focus:border-ink focus:outline-none"
+      />
+    </div>
   );
 }

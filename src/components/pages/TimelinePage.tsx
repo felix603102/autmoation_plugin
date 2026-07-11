@@ -54,16 +54,18 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
     });
   }, [timeline, file]);
 
-  // Load persisted task completion status for the active day. This runs after
-  // seeding so saved values override the timeline defaults when present.
+  // Load persisted task completion status (and optional custom date) for the active day.
+  // This runs after seeding so saved values override the timeline defaults when present.
+  const [customDate, setCustomDate] = useState<string | undefined>(undefined);
   useEffect(() => {
     if (!timeline) return;
     window.electronAPI?.loadTaskStatus(file).then((saved) => {
+      setCustomDate(saved.date);
       setChecked((prev) => {
         const next = { ...prev };
         for (const task of timeline.tasks) {
-          if (saved[task.id] !== undefined) {
-            next[`${file}:${task.id}`] = saved[task.id];
+          if (saved.tasks[task.id] !== undefined) {
+            next[`${file}:${task.id}`] = saved.tasks[task.id];
           }
         }
         return next;
@@ -174,7 +176,9 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
       ) : (
         <div className="mx-auto max-w-3xl">
           {/* Date + big day title */}
-          <div className="text-xs text-muted">{formatDate(timeline.date)}</div>
+          <div className="text-xs text-muted">
+            {formatDate(customDate ?? timeline.date)}
+          </div>
           <h2 className="mt-1 text-3xl font-bold tracking-tight text-ink">
             {timeline.day}
           </h2>
