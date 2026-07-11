@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Folder } from 'lucide-react';
+import { useTaskStatus } from '../../contexts/TaskStatusContext';
 
 /**
  * Settings page. Lets the user choose a profile directory (via a native dialog
  * exposed through the preload bridge) and shows runtime version info.
  */
 export function SettingsPage() {
+  const { saveAll } = useTaskStatus();
   const [profileDir, setProfileDir] = useState<string>('Not set');
   const [statusDir, setStatusDir] = useState<string>('Loading…');
   const [versions, setVersions] = useState<{
@@ -31,6 +33,7 @@ export function SettingsPage() {
     const dir = await window.electronAPI?.selectDirectory();
     if (dir) {
       await window.electronAPI?.setStatusBasePath(dir);
+      await saveAll();
       setStatusDir(dir);
       // Reload so the Timeline page starts fresh from the new path.
       window.location.reload();
@@ -39,6 +42,7 @@ export function SettingsPage() {
 
   const resetStatusDirectory = async () => {
     await window.electronAPI?.setStatusBasePath('');
+    await saveAll();
     const basePath = await window.electronAPI?.getStatusBasePath();
     if (basePath) setStatusDir(basePath);
     // Reload so the Timeline page starts fresh from the default path.

@@ -6,6 +6,7 @@ import { TimelinePage } from './components/pages/TimelinePage';
 import { MatchOddsPage } from './components/pages/MatchOddsPage';
 import { SettingsPage } from './components/pages/SettingsPage';
 import { type PageId } from '@shared/config';
+import { TaskStatusProvider } from './contexts/TaskStatusContext';
 
 /**
  * Application shell. Holds the active-page state and renders the sidebar,
@@ -16,16 +17,18 @@ export default function App() {
   const [activePage, setActivePage] = useState<PageId>('checklist');
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-white">
-      <Sidebar activePage={activePage} onNavigate={setActivePage} />
+    <TaskStatusProvider>
+      <div className="flex h-screen w-screen overflow-hidden bg-white">
+        <Sidebar activePage={activePage} onNavigate={setActivePage} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <main className="min-h-0 flex-1 overflow-hidden">
-          {renderPage(activePage, setActivePage)}
-        </main>
-        <Footer status="Ready" />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <main className="min-h-0 flex-1 overflow-hidden">
+            {renderPage(activePage, setActivePage)}
+          </main>
+          <Footer status="Ready" />
+        </div>
       </div>
-    </div>
+    </TaskStatusProvider>
   );
 }
 

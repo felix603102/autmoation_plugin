@@ -3,6 +3,7 @@ import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play } from 'lucide-r
 import { useTimeline } from '../../hooks/useTimelines';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
 import type { Task, TaskScriptResult } from '../../types';
+import { useTaskStatus } from '../../contexts/TaskStatusContext';
 
 interface TimelinePageProps {
   file: string; // active timeline section id, e.g. "day-1"
@@ -20,9 +21,8 @@ interface TimelinePageProps {
 export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
   const timeline = useTimeline(file);
 
-  // Keys are file-prefixed: `${file}:${taskId}` and
-  // `${file}:${taskId}:${subtaskId}` — so state survives tab switches.
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  // Completion state is global so it survives tab switches and Settings visits.
+  const { checked, setChecked } = useTaskStatus();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   // Tracks the execution state of each task's Python automation script.
   const [scriptResults, setScriptResults] = useState<Record<string, TaskScriptResult>>({});
