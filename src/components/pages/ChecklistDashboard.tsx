@@ -1,6 +1,7 @@
 import { Calendar, Pencil, Circle, Gauge } from 'lucide-react';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
-import { useTimeline, getTimelineProgress } from '../../hooks/useTimelines';
+import { useTimeline } from '../../hooks/useTimelines';
+import { useTaskStatus } from '../../contexts/TaskStatusContext';
 import type { TimelineData } from '../../types';
 
 interface ChecklistDashboardProps {
@@ -56,11 +57,18 @@ function DayRow({
   onClick: () => void;
 }) {
   const timeline: TimelineData | null = useTimeline(file);
-  const { done, total } = getTimelineProgress(timeline);
+  const { checked, customDates } = useTaskStatus();
+
+  const tasks = timeline?.tasks ?? [];
+  const total = tasks.length;
+  const done = tasks.filter((t) => checked[`${file}:${t.id}`]).length;
   const percent = total > 0 ? Math.round((done / total) * 100) : 0;
 
   // The next actionable task is the first one not yet completed.
-  const nextTask = timeline?.tasks.find((t) => !t.completed);
+  const nextTask = tasks.find((t) => !checked[`${file}:${t.id}`]);
+
+  // Use the persisted custom date if set, otherwise fall back to the JSON date.
+  const date = customDates[file] ?? timeline?.date;
 
   return (
     <button
@@ -83,7 +91,7 @@ function DayRow({
       {/* Date row with calendar icon and formatted weekday/date */}
       <div className="mt-1 flex items-center gap-1.5 text-xs text-muted">
         <Calendar size={12} />
-        {formatDate(timeline?.date)}
+        {formatDate(date)}
       </div>
 
       {/* Thin progress bar (black fill on a light track) */}

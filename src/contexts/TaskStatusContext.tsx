@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { TIMELINES_BY_FILE } from '../hooks/useTimelines';
 import type { TaskStatusMap } from '../vite-env.d.ts';
 
@@ -13,6 +20,8 @@ interface TaskStatusContextValue {
   resetAll: () => Promise<void>;
   /** Set the custom date for a timeline and persist it. */
   saveDate: (file: string, date: string | null) => Promise<void>;
+  /** Per-file custom dates (YYYY-MM-DD) keyed by timeline file id. */
+  customDates: Record<string, string>;
 }
 
 const TaskStatusContext = createContext<TaskStatusContextValue | null>(null);
@@ -24,6 +33,34 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
   // Per-file custom dates cached from the status files so saveAll/resetAll can
   // preserve them without re-reading disk on every call.
   const [customDates, setCustomDates] = useState<Record<string, string>>({});
+
+  // Eagerly load persisted statuses for every timeline so the dashboard can
+  // reflect the latest completion state without visiting each timeline first.
+  useEffect(() => {
+    if (!window.electronAPI) return;
+
+    const nextChecked: Record<string, boolean> = {};
+    const nextDates: Record<string, string> = {};
+
+    const loads = Object.entries(TIMELINES_BY_FILE).map(async ([file, timeline]) => {
+      const saved = await window.electronAPI.loadTaskStatus(file);
+      const tasksMap = saved && 'tasks' in saved ? saved.tasks : (saved as Record<string, boolean> | undefined);
+      if (saved && 'date' in saved && saved.date) {
+        nextDates[file] = saved.date;
+      }
+      for (const task of timeline.tasks) {
+        const key = `${file}:${task.id}`;
+        nextChecked[key] = tasksMap?.[task.id] ?? task.completed;
+      }
+    });
+
+    Promise.all(loads)
+      .then(() => {
+        setChecked(nextChecked);
+        setCustomDates(nextDates);
+      })
+      .catch(() => {});
+  }, []);
 
   const saveAll = useCallback(async () => {
     if (!window.electronAPI) return;
@@ -99,8 +136,8 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
   );
 
   const value = useMemo(
-    () => ({ checked, setChecked, saveAll, resetAll, saveDate }),
-    [checked, saveAll, resetAll, saveDate],
+    () => ({ checked, setChecked, saveAll, resetAll, saveDate, customDates }),
+    [checked, saveAll, resetAll, saveDate, customDates],
   );
 
   return (
