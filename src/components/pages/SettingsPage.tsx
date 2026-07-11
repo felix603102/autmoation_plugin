@@ -32,6 +32,8 @@ export function SettingsPage() {
     if (dir) {
       await window.electronAPI?.setStatusBasePath(dir);
       setStatusDir(dir);
+      // Reload so the Timeline page starts fresh from the new path.
+      window.location.reload();
     }
   };
 
@@ -39,6 +41,8 @@ export function SettingsPage() {
     await window.electronAPI?.setStatusBasePath('');
     const basePath = await window.electronAPI?.getStatusBasePath();
     if (basePath) setStatusDir(basePath);
+    // Reload so the Timeline page starts fresh from the default path.
+    window.location.reload();
   };
 
   return (
