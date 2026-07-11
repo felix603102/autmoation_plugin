@@ -13,10 +13,10 @@
     "preview": "vite preview",
     "start": "electron .",
     "postinstall": "npx playwright install chromium",
-    "dist": "npm run build && electron-builder",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:win": "npm run build && electron-builder --win",
-    "dist:all": "npm run build && electron-builder --mac --win"
+    "dist": "npm run build && electron-builder --publish=never",
+    "dist:mac": "npm run build && electron-builder --mac --publish=never",
+    "dist:win": "npm run build && electron-builder --win --publish=never",
+    "dist:all": "npm run build && electron-builder --mac --win --publish=never"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
