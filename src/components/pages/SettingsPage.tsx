@@ -63,6 +63,11 @@ export function SettingsPage() {
   };
 
   const resetTimelineStatus = async () => {
+    const confirmed = window.confirm(
+      'Reset all timeline task statuses to incomplete? This cannot be undone.',
+    );
+    if (!confirmed) return;
+
     await resetAll();
     // Reload so the Timeline page reflects the reset state.
     window.location.reload();
