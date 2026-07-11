@@ -49,6 +49,7 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
     if (!window.electronAPI) return;
 
     // Build an all-false map for every bundled timeline and persist it.
+    // Dates are preserved by passing undefined (main process keeps existing date).
     const nextChecked: Record<string, boolean> = {};
     const saves: Promise<void>[] = [];
     for (const [file, timeline] of Object.entries(TIMELINES_BY_FILE)) {
@@ -56,8 +57,11 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
       for (const task of timeline.tasks) {
         tasksMap[task.id] = false;
         nextChecked[`${file}:${task.id}`] = false;
+        for (const sub of task.subtasks) {
+          nextChecked[`${file}:${task.id}:${sub.id}`] = false;
+        }
       }
-      const date = customDates[file] ?? null;
+      const date = customDates[file];
       saves.push(window.electronAPI.saveTaskStatus(file, tasksMap, date));
     }
 
