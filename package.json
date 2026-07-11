@@ -55,6 +55,7 @@
     "asarUnpack": [
       "electron/automation/**/*"
     ],
+    "publish": null,
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
