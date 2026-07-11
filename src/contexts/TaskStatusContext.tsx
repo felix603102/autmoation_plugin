@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { TIMELINES_BY_FILE } from '../hooks/useTimelines';
 import type { TaskStatusMap } from '../vite-env.d.ts';
 
 interface TaskStatusContextValue {
@@ -19,23 +20,19 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
   const saveAll = useCallback(async () => {
     if (!window.electronAPI) return;
 
-    // Group the flat checked keys back into per-file maps.
-    const byFile = new Map<string, TaskStatusMap>();
-    for (const key of Object.keys(checked)) {
-      const parts = key.split(':');
-      // Keys are `${file}:${taskId}` for tasks or `${file}:${taskId}:${subtaskId}` for subtasks.
-      // Only task-level status is persisted.
-      if (parts.length < 2) continue;
-      const file = parts[0];
-      const taskId = parts[1];
-      if (!byFile.has(file)) byFile.set(file, {});
-      byFile.get(file)![taskId] = !!checked[key];
-    }
-
+    // Build a status map for every bundled timeline, falling back to the
+    // timeline JSON defaults when the user has not yet toggled that task.
     const saves: Promise<void>[] = [];
-    for (const [file, tasksMap] of byFile.entries()) {
+    for (const [file, timeline] of Object.entries(TIMELINES_BY_FILE)) {
+      const tasksMap: TaskStatusMap = {};
+      for (const task of timeline.tasks) {
+        const key = `${file}:${task.id}`;
+        tasksMap[task.id] =
+          checked[key] !== undefined ? checked[key] : task.completed;
+      }
       saves.push(window.electronAPI.saveTaskStatus(file, tasksMap));
     }
+
     await Promise.all(saves);
   }, [checked]);
 
