@@ -7,8 +7,10 @@ interface TaskStatusContextValue {
   checked: Record<string, boolean>;
   /** Direct state setter; consumers can use this to seed or update state. */
   setChecked: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  /** Save all currently known task statuses to the configured status base path. */
+  /** Save all timeline task statuses to the configured status base path. */
   saveAll: () => Promise<void>;
+  /** Reset every timeline task status to false and persist it. */
+  resetAll: () => Promise<void>;
 }
 
 const TaskStatusContext = createContext<TaskStatusContextValue | null>(null);
@@ -36,9 +38,28 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
     await Promise.all(saves);
   }, [checked]);
 
+  const resetAll = useCallback(async () => {
+    if (!window.electronAPI) return;
+
+    // Build an all-false map for every bundled timeline and persist it.
+    const nextChecked: Record<string, boolean> = {};
+    const saves: Promise<void>[] = [];
+    for (const [file, timeline] of Object.entries(TIMELINES_BY_FILE)) {
+      const tasksMap: TaskStatusMap = {};
+      for (const task of timeline.tasks) {
+        tasksMap[task.id] = false;
+        nextChecked[`${file}:${task.id}`] = false;
+      }
+      saves.push(window.electronAPI.saveTaskStatus(file, tasksMap));
+    }
+
+    await Promise.all(saves);
+    setChecked(nextChecked);
+  }, []);
+
   const value = useMemo(
-    () => ({ checked, setChecked, saveAll }),
-    [checked, saveAll],
+    () => ({ checked, setChecked, saveAll, resetAll }),
+    [checked, saveAll, resetAll],
   );
 
   return (

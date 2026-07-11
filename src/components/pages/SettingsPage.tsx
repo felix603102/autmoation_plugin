@@ -7,7 +7,7 @@ import { useTaskStatus } from '../../contexts/TaskStatusContext';
  * exposed through the preload bridge) and shows runtime version info.
  */
 export function SettingsPage() {
-  const { saveAll } = useTaskStatus();
+  const { saveAll, resetAll } = useTaskStatus();
   const [profileDir, setProfileDir] = useState<string>('Not set');
   const [statusDir, setStatusDir] = useState<string>('Loading…');
   const [versions, setVersions] = useState<{
@@ -49,6 +49,12 @@ export function SettingsPage() {
     window.location.reload();
   };
 
+  const resetTimelineStatus = async () => {
+    await resetAll();
+    // Reload so the Timeline page reflects the reset state.
+    window.location.reload();
+  };
+
   return (
     <div className="flex h-full flex-col p-7">
       <h1 className="page-title mb-6">setting</h1>
@@ -73,6 +79,9 @@ export function SettingsPage() {
           </button>
           <button type="button" onClick={resetStatusDirectory} className="btn-text text-xs text-muted hover:text-ink">
             Reset to default
+          </button>
+          <button type="button" onClick={resetTimelineStatus} className="btn-text text-xs text-red-600 hover:text-red-700">
+            Reset all timeline status
           </button>
         </div>
         <p className="mt-3 break-all text-xs text-muted">Status path: {statusDir}</p>
