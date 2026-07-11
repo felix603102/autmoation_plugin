@@ -1,0 +1,243 @@
+{
+  "id": "FB3022",
+  "league": "La Liga",
+  "kickoff": "Sat, 28 Jun · 18:30",
+  "homeTeam": "Valencia",
+  "awayTeam": "Betis",
+  "markets": [
+    {
+      "id": "FB3022-m0",
+      "betType": "HAD",
+      "category": "Core",
+      "selection": "Home",
+      "bookmaker": 2.27,
+      "correct": 2.27,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m1",
+      "betType": "HAD",
+      "category": "Core",
+      "selection": "Draw",
+      "bookmaker": 1.75,
+      "correct": 1.75,
+      "status": "pending"
+    },
+    {
+      "id": "FB3022-m2",
+      "betType": "HAD",
+      "category": "Core",
+      "selection": "Away",
+      "bookmaker": 1.49,
+      "correct": 1.49,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m3",
+      "betType": "HDC",
+      "category": "Core",
+      "selection": "Home",
+      "bookmaker": 1.91,
+      "correct": 1.91,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m4",
+      "betType": "HDC",
+      "category": "Core",
+      "selection": "Draw",
+      "bookmaker": 2.58,
+      "correct": 2.58,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m5",
+      "betType": "HDC",
+      "category": "Core",
+      "selection": "Away",
+      "bookmaker": 2.42,
+      "correct": 2.42,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m6",
+      "betType": "HiLo",
+      "category": "Core",
+      "selection": "Over 2.5",
+      "bookmaker": 1.96,
+      "correct": 1.87,
+      "status": "mismatch"
+    },
+    {
+      "id": "FB3022-m7",
+      "betType": "HiLo",
+      "category": "Core",
+      "selection": "Under 2.5",
+      "bookmaker": 2.07,
+      "correct": 2.07,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m8",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "HH",
+      "bookmaker": 11.47,
+      "correct": 11.47,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m9",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "HD",
+      "bookmaker": 15.42,
+      "correct": 15.42,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m10",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "HA",
+      "bookmaker": 25.48,
+      "correct": 25.48,
+      "status": "pending"
+    },
+    {
+      "id": "FB3022-m11",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "DH",
+      "bookmaker": 19.64,
+      "correct": 19.64,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m12",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "DD",
+      "bookmaker": 25.41,
+      "correct": 25.41,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m13",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "DA",
+      "bookmaker": 20.98,
+      "correct": 20.98,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m14",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "AH",
+      "bookmaker": 20.53,
+      "correct": 20.36,
+      "status": "pending"
+    },
+    {
+      "id": "FB3022-m15",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "AD",
+      "bookmaker": 21.24,
+      "correct": 21.24,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m16",
+      "betType": "HaFu",
+      "category": "Core",
+      "selection": "AA",
+      "bookmaker": 11.96,
+      "correct": 11.96,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m17",
+      "betType": "Total Goals",
+      "category": "Core",
+      "selection": "0-1",
+      "bookmaker": 3.31,
+      "correct": 3.24,
+      "status": "mismatch"
+    },
+    {
+      "id": "FB3022-m18",
+      "betType": "Total Goals",
+      "category": "Core",
+      "selection": "2-3",
+      "bookmaker": 2.9,
+      "correct": 2.9,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m19",
+      "betType": "Total Goals",
+      "category": "Core",
+      "selection": "4-6",
+      "bookmaker": 6.83,
+      "correct": 6.83,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m20",
+      "betType": "Total Goals",
+      "category": "Core",
+      "selection": "7+",
+      "bookmaker": 2.23,
+      "correct": 2.23,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m21",
+      "betType": "Corner Taken HiLo",
+      "category": "Corner",
+      "selection": "Over 9.5",
+      "bookmaker": 2.03,
+      "correct": 1.86,
+      "status": "mismatch"
+    },
+    {
+      "id": "FB3022-m22",
+      "betType": "Corner Taken HiLo",
+      "category": "Corner",
+      "selection": "Under 9.5",
+      "bookmaker": 2.3,
+      "correct": 2.23,
+      "status": "mismatch"
+    },
+    {
+      "id": "FB3022-m23",
+      "betType": "Corner Taken HDC",
+      "category": "Corner",
+      "selection": "Home",
+      "bookmaker": 1.55,
+      "correct": 1.55,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m24",
+      "betType": "Corner Taken HDC",
+      "category": "Corner",
+      "selection": "Draw",
+      "bookmaker": 1.94,
+      "correct": 1.94,
+      "status": "verified"
+    },
+    {
+      "id": "FB3022-m25",
+      "betType": "Corner Taken HDC",
+      "category": "Corner",
+      "selection": "Away",
+      "bookmaker": 2.13,
+      "correct": 2.13,
+      "status": "verified"
+    }
+  ]
+}

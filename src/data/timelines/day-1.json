@@ -1,0 +1,136 @@
+{
+  "day": "Day 1",
+  "date": "2026-06-25",
+  "tasks": [
+    {
+      "id": "smart-dashboard-wording",
+      "title": "Smart Dashboard display wording (with last update timestamp)",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Dashboard",
+      "description": "Ensure the Smart Dashboard displays the correct wording along with the last update timestamp.",
+      "subtasks": []
+    },
+    {
+      "id": "no-active-matches-before-dc",
+      "title": "Verified No Active Matches Remain Before DC kick start",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Verification",
+      "description": "Confirm that no active matches remain before the DC kick start begins.",
+      "subtasks": []
+    },
+    {
+      "id": "dc-matches-selling-started",
+      "title": "All DC Matches Selling Started",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "DC Matches",
+      "description": "Verify that selling has started for all DC matches.",
+      "subtasks": []
+    },
+    {
+      "id": "trn-pool-odds-ready",
+      "title": "All TRN Pool Odds Ready for Verification",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "TRN Pool",
+      "description": "Confirm that all TRN pool odds are ready and available for verification.",
+      "subtasks": []
+    },
+    {
+      "id": "trn-pool-odds-verified",
+      "title": "All TRN Pool Odds Verification Completed",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "TRN Pool",
+      "description": "Mark that all TRN pool odds verification has been completed.",
+      "subtasks": []
+    },
+    {
+      "id": "ready-bet-placement",
+      "title": "Ready for Bet Placement",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Betting",
+      "description": "System is ready for bet placement to begin.",
+      "subtasks": []
+    },
+    {
+      "id": "batch-1-bet-placement",
+      "title": "Day 1 1st Batch of Bet Placement by Callibrator Completed",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Betting",
+      "description": "The first batch of bet placements by the Callibrator for Day 1 has been completed.",
+      "subtasks": []
+    },
+    {
+      "id": "all-matches-selling-stopped",
+      "title": "All Matches Selling Stopped",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Matches",
+      "description": "Selling has been stopped for all matches.",
+      "subtasks": []
+    },
+    {
+      "id": "inplay-ready-bet-placement",
+      "title": "Day 1 Inplay Match(es) entered Inplay and Ready for Bet Placement",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Inplay",
+      "description": "All Day 1 inplay matches have entered inplay status and are ready for bet placement.",
+      "subtasks": []
+    },
+    {
+      "id": "batch-2-bet-placement",
+      "title": "Day 1 2nd Batch of Bet Placement by Callibrator Completed",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Betting",
+      "description": "The second batch of bet placements by the Callibrator for Day 1 has been completed.",
+      "subtasks": []
+    },
+    {
+      "id": "all-kicked-off-early-settlement",
+      "title": "All Day 1 Matches Kicked Off and Ready for Early Settlement",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Settlement",
+      "description": "All Day 1 matches have kicked off and are ready for early settlement processing.",
+      "subtasks": []
+    },
+    {
+      "id": "early-settlement-completed",
+      "title": "Day 1 Early Settlement Completed",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Settlement",
+      "description": "Early settlement for Day 1 has been completed.",
+      "subtasks": []
+    },
+    {
+      "id": "all-matches-settled",
+      "title": "All Day 1 Matches Settled",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Settlement",
+      "description": "All Day 1 matches have been fully settled.",
+      "subtasks": []
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "day": "Day 3",
+  "date": "2026-06-27",
+  "tasks": [
+    {
+      "id": "write-spec",
+      "title": "Write product spec for billing v2",
+      "completed": false,
+      "dueDate": "Tomorrow",
+      "priority": "medium",
+      "tag": "Product",
+      "description": "Draft the technical specification for the upcoming billing v2 feature.",
+      "subtasks": [
+        { "id": "data-model", "title": "Data model", "completed": false },
+        { "id": "api-surface", "title": "API surface", "completed": false },
+        { "id": "edge-cases", "title": "Edge cases", "completed": false }
+      ]
+    },
+    {
+      "id": "onboarding-deck",
+      "title": "Prepare onboarding deck",
+      "completed": false,
+      "dueDate": "Fri",
+      "priority": "medium",
+      "tag": "Sales",
+      "description": "Build the customer onboarding deck for the new enterprise accounts.",
+      "subtasks": [
+        { "id": "outline", "title": "Outline sections", "completed": false },
+        { "id": "slides", "title": "Draft slides", "completed": false }
+      ]
+    }
+  ]
+}

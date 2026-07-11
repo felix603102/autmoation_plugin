@@ -1,0 +1,36 @@
+{
+  "day": "Pre-Day 1",
+  "date": "2026-06-24",
+  "tasks": [
+    {
+      "id": "check-numbers",
+      "title": "Check original + correct numbers (list out checklist)",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Verification",
+      "description": "List out the full checklist and verify original numbers against correct numbers for every entry.",
+      "subtasks": []
+    },
+    {
+      "id": "matches-odds-validate",
+      "title": "22 Matches: Checked all offered pool + odds validate",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Matches",
+      "description": "Checked all offered pool + odds validate across all 22 matches. Status is changed by all matches status.",
+      "subtasks": []
+    },
+    {
+      "id": "tournament-odds-validate",
+      "title": "Tournament: Checked all offered pool + odds validate",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "medium",
+      "tag": "Tournament",
+      "description": "Checked all offered pool + odds validate for tournament entries. Status is changed by all matches status.",
+      "subtasks": []
+    }
+  ]
+}

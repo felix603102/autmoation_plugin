@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global base: Apple-minimal light surface, no text selection on chrome. */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  @apply bg-white text-ink font-sans antialiased;
+}
+
+/* Reusable component classes (kept small; utilities preferred elsewhere). */
+@layer components {
+  .page-title {
+    @apply text-2xl font-bold lowercase tracking-tight text-ink;
+  }
+
+  .btn-primary {
+    @apply rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white
+      transition-colors hover:bg-black disabled:opacity-40;
+  }
+
+  .btn-outlined {
+    @apply rounded-lg border border-hairline bg-white px-4 py-2 text-sm
+      font-medium text-ink transition-colors hover:bg-sidebar disabled:opacity-40;
+  }
+
+  .card {
+    @apply rounded-xl border border-hairline bg-white shadow-sm;
+  }
+}
+
+/* Thin, unobtrusive scrollbars to match the native feel. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-black/15;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-black/25;
+}

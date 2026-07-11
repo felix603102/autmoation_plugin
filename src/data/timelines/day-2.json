@@ -1,0 +1,33 @@
+{
+  "day": "Day 2",
+  "date": "2026-06-26",
+  "tasks": [
+    {
+      "id": "design-homepage",
+      "title": "Design new homepage hero section",
+      "completed": true,
+      "dueDate": "Today",
+      "priority": "high",
+      "tag": "Design",
+      "description": "Explore three directions for the hero. Focus on typography hierarchy, a calm white background, and a single product screenshot. Hand off in Figma by EOD Friday.",
+      "subtasks": [
+        { "id": "moodboard", "title": "Moodboard references", "completed": true },
+        { "id": "wireframe", "title": "Wireframe 3 variants", "completed": true },
+        { "id": "final-direction", "title": "Pick final direction", "completed": true }
+      ]
+    },
+    {
+      "id": "review-prs",
+      "title": "Review pull requests",
+      "completed": false,
+      "dueDate": "Today",
+      "priority": "medium",
+      "tag": "Engineering",
+      "description": "Go through the open pull requests and leave actionable review comments.",
+      "subtasks": [
+        { "id": "pr-142", "title": "#142 auth refactor", "completed": false },
+        { "id": "pr-147", "title": "#147 sidebar fix", "completed": false }
+      ]
+    }
+  ]
+}
