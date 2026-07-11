@@ -7,6 +7,7 @@ import { Folder } from 'lucide-react';
  */
 export function SettingsPage() {
   const [profileDir, setProfileDir] = useState<string>('Not set');
+  const [statusDir, setStatusDir] = useState<string>('Loading…');
   const [versions, setVersions] = useState<{
     app: string;
     electron: string;
@@ -14,15 +15,30 @@ export function SettingsPage() {
     node: string;
   } | null>(null);
 
-  // Fetch runtime versions from the main process on mount.
+  // Fetch runtime versions and current status directory from the main process.
   useEffect(() => {
     // Guard for running the renderer outside Electron (e.g. `vite preview`).
     window.electronAPI?.getVersions().then(setVersions).catch(() => {});
+    window.electronAPI?.getStatusBasePath().then(setStatusDir).catch(() => {});
   }, []);
 
   const chooseDirectory = async () => {
     const dir = await window.electronAPI?.selectDirectory();
     if (dir) setProfileDir(dir);
+  };
+
+  const chooseStatusDirectory = async () => {
+    const dir = await window.electronAPI?.selectDirectory();
+    if (dir) {
+      await window.electronAPI?.setStatusBasePath(dir);
+      setStatusDir(dir);
+    }
+  };
+
+  const resetStatusDirectory = async () => {
+    await window.electronAPI?.setStatusBasePath('');
+    const basePath = await window.electronAPI?.getStatusBasePath();
+    if (basePath) setStatusDir(basePath);
   };
 
   return (
@@ -37,6 +53,21 @@ export function SettingsPage() {
           Choose Profile Directory…
         </button>
         <p className="mt-3 break-all text-xs text-muted">Profile: {profileDir}</p>
+      </div>
+
+      {/* Task status storage path */}
+      <div className="card mt-4 max-w-2xl p-6">
+        <div className="mb-4 text-sm font-semibold text-ink">Task Status Storage</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={chooseStatusDirectory} className="btn-outlined inline-flex items-center gap-2">
+            <Folder size={16} />
+            Choose Status Folder…
+          </button>
+          <button type="button" onClick={resetStatusDirectory} className="btn-text text-xs text-muted hover:text-ink">
+            Reset to default
+          </button>
+        </div>
+        <p className="mt-3 break-all text-xs text-muted">Status path: {statusDir}</p>
       </div>
 
       {/* Runtime versions */}

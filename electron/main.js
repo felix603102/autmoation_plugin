@@ -5,6 +5,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { spawn } = require('node:child_process');
+const store = require('./store');
 
 // In dev we load Vite's dev server; in production we load the built index.html.
 const isDev = process.env.NODE_ENV === 'development';
@@ -69,6 +70,55 @@ ipcMain.handle('dialog:selectDirectory', async () => {
   const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
   if (result.canceled || result.filePaths.length === 0) return null;
   return result.filePaths[0];
+});
+
+// --- Task status persistence ------------------------------------------------
+
+const STATUS_DIR_KEY = 'taskStatusDir';
+const DEFAULT_STATUS_DIR_NAME = 'task-status';
+
+/** Return the configured status directory, defaulting to userData/task-status. */
+function getStatusDir() {
+  const configured = store.get(STATUS_DIR_KEY);
+  if (configured) return configured;
+  return path.join(app.getPath('userData'), DEFAULT_STATUS_DIR_NAME);
+}
+
+/** Return the status file path for a given timeline file id. */
+function getStatusFilePath(file) {
+  return path.join(getStatusDir(), `${file}.json`);
+}
+
+// Get/set the base directory where task status JSON files are stored.
+ipcMain.handle('status:getBasePath', () => getStatusDir());
+ipcMain.handle('status:setBasePath', (_event, basePath) => {
+  store.set(STATUS_DIR_KEY, basePath);
+});
+
+// Load task completion status for a timeline. Returns a map of taskId -> boolean.
+ipcMain.handle('status:load', async (_event, file) => {
+  const filePath = getStatusFilePath(file);
+  try {
+    if (!fs.existsSync(filePath)) return {};
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const data = JSON.parse(raw);
+    return data.tasks ?? {};
+  } catch (err) {
+    console.error(`[status:load] failed for ${file}:`, err);
+    return {};
+  }
+});
+
+// Save task completion status for a timeline.
+ipcMain.handle('status:save', async (_event, file, tasksMap) => {
+  const filePath = getStatusFilePath(file);
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify({ tasks: tasksMap }, null, 2));
+  } catch (err) {
+    console.error(`[status:save] failed for ${file}:`, err);
+    throw err;
+  }
 });
 
 // Run the automation script for a given task in a separate Node.js process.

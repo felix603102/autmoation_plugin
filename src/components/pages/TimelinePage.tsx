@@ -54,6 +54,34 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
     });
   }, [timeline, file]);
 
+  // Load persisted task completion status for the active day. This runs after
+  // seeding so saved values override the timeline defaults when present.
+  useEffect(() => {
+    if (!timeline) return;
+    window.electronAPI?.loadTaskStatus(file).then((saved) => {
+      setChecked((prev) => {
+        const next = { ...prev };
+        for (const task of timeline.tasks) {
+          if (saved[task.id] !== undefined) {
+            next[`${file}:${task.id}`] = saved[task.id];
+          }
+        }
+        return next;
+      });
+    }).catch(() => {});
+  }, [timeline, file]);
+
+  // Persist task completion status whenever the user toggles a task.
+  // Subtask completion is intentionally not persisted (plan scope: tasks only).
+  const persistTaskStatus = (nextChecked: Record<string, boolean>) => {
+    if (!timeline) return;
+    const tasksMap: Record<string, boolean> = {};
+    for (const task of timeline.tasks) {
+      tasksMap[task.id] = !!nextChecked[`${file}:${task.id}`];
+    }
+    window.electronAPI?.saveTaskStatus(file, tasksMap).catch(() => {});
+  };
+
   const progress = useMemo(() => {
     if (!timeline) return { done: 0, total: 0, percent: 0 };
     const done = timeline.tasks.filter((t) => checked[`${file}:${t.id}`]).length;
@@ -61,8 +89,13 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
     return { done, total, percent: total ? Math.round((done / total) * 100) : 0 };
   }, [timeline, checked, file]);
 
-  const toggle = (key: string) =>
-    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggle = (key: string) => {
+    setChecked((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      persistTaskStatus(next);
+      return next;
+    });
+  };
 
   const toggleExpand = (key: string) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
