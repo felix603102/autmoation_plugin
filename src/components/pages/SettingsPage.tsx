@@ -29,7 +29,9 @@ export function SettingsPage() {
     const initialDates: Record<string, string> = {};
     const loads = Object.keys(TIMELINES_BY_FILE).map(async (file) => {
       const saved = await window.electronAPI?.loadTaskStatus(file);
-      if (saved?.date) initialDates[file] = saved.date;
+      // Backwards-compatible with old plain tasks map format.
+      const date = saved && 'date' in saved ? saved.date : undefined;
+      if (date) initialDates[file] = date;
     });
     Promise.all(loads).then(() => setDates(initialDates)).catch(() => {});
   }, []);

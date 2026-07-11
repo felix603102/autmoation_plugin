@@ -60,12 +60,14 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
   useEffect(() => {
     if (!timeline) return;
     window.electronAPI?.loadTaskStatus(file).then((saved) => {
-      setCustomDate(saved.date);
+      // Backwards-compatible with old plain tasks map format.
+      const tasksMap = saved && 'tasks' in saved ? saved.tasks : (saved as Record<string, boolean> | undefined);
+      setCustomDate(saved && 'date' in saved ? saved.date : undefined);
       setChecked((prev) => {
         const next = { ...prev };
         for (const task of timeline.tasks) {
-          if (saved.tasks[task.id] !== undefined) {
-            next[`${file}:${task.id}`] = saved.tasks[task.id];
+          if (tasksMap?.[task.id] !== undefined) {
+            next[`${file}:${task.id}`] = tasksMap[task.id];
           }
         }
         return next;
