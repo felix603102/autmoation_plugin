@@ -77,11 +77,22 @@ ipcMain.handle('dialog:selectDirectory', async () => {
 const STATUS_DIR_KEY = 'taskStatusDir';
 const DEFAULT_STATUS_DIR_NAME = 'task-status';
 
-/** Return the configured status directory, defaulting to userData/task-status. */
+/** Return the configured status directory, defaulting to the application location. */
 function getStatusDir() {
   const configured = store.get(STATUS_DIR_KEY);
   if (configured) return configured;
-  return path.join(app.getPath('userData'), DEFAULT_STATUS_DIR_NAME);
+  return path.join(getAppDir(), DEFAULT_STATUS_DIR_NAME);
+}
+
+/** Return the directory containing the application (next to the executable). */
+function getAppDir() {
+  const exe = app.getPath('exe');
+  if (process.platform === 'darwin') {
+    // On macOS the executable is inside MyApp.app/Contents/MacOS/MyApp.
+    // We go up three levels so the status folder sits next to the .app bundle.
+    return path.resolve(exe, '..', '..', '..');
+  }
+  return path.dirname(exe);
 }
 
 /** Return the status file path for a given timeline file id. */
