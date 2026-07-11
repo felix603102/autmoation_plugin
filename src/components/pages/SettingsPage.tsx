@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Folder } from 'lucide-react';
 import { useTaskStatus } from '../../contexts/TaskStatusContext';
 import { TIMELINES_BY_FILE } from '../../hooks/useTimelines';
+import { TIMELINE_SECTIONS } from '@shared/config';
 import type { TimelineData } from '../../types';
 
 /**
@@ -109,15 +110,19 @@ export function SettingsPage() {
       <div className="card mt-4 max-w-2xl p-6">
         <div className="mb-4 text-sm font-semibold text-ink">Timeline Dates</div>
         <div className="space-y-3">
-          {Object.entries(TIMELINES_BY_FILE).map(([file, timeline]) => (
-            <TimelineDateRow
-              key={file}
-              file={file}
-              timeline={timeline}
-              date={dates[file] ?? timeline.date}
-              onChange={(value) => updateDate(file, value)}
-            />
-          ))}
+          {TIMELINE_SECTIONS.map((section) => {
+            const timeline = TIMELINES_BY_FILE[section.file];
+            if (!timeline) return null;
+            return (
+              <TimelineDateRow
+                key={section.file}
+                file={section.file}
+                timeline={timeline}
+                date={dates[section.file] ?? timeline.date}
+                onChange={(value) => updateDate(section.file, value)}
+              />
+            );
+          })}
         </div>
       </div>
 
