@@ -1,6 +1,6 @@
-import { Calendar, Pencil, Circle, Gauge } from 'lucide-react';
+import { Calendar, Pencil, Circle, Gauge, CheckCircle2 } from 'lucide-react';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
-import { useTimeline } from '../../hooks/useTimelines';
+import { useTimeline, TIMELINES_BY_FILE } from '../../hooks/useTimelines';
 import { useTaskStatus } from '../../contexts/TaskStatusContext';
 import type { TimelineData } from '../../types';
 
@@ -29,6 +29,9 @@ export function ChecklistDashboard({ onOpenSection }: ChecklistDashboardProps) {
         </p>
       </header>
 
+      {/* Global progress overview across all timeline days */}
+      <GlobalSummary />
+
       {/* Stacked panel of day cards, centered and width-constrained */}
       <div className="mx-auto max-w-3xl divide-y divide-hairline rounded-2xl border border-hairline bg-white">
         {TIMELINE_SECTIONS.map((section) => (
@@ -41,6 +44,46 @@ export function ChecklistDashboard({ onOpenSection }: ChecklistDashboardProps) {
             }
           />
         ))}
+      </div>
+    </div>
+  );
+}
+
+/** Aggregate progress card summing task completion across every timeline day. */
+function GlobalSummary() {
+  const { checked } = useTaskStatus();
+
+  let total = 0;
+  let done = 0;
+  for (const [file, timeline] of Object.entries(TIMELINES_BY_FILE)) {
+    for (const task of timeline.tasks) {
+      total += 1;
+      if (checked[`${file}:${task.id}`]) done += 1;
+    }
+  }
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  return (
+    <div className="mx-auto mb-6 max-w-3xl rounded-2xl border border-hairline bg-white p-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 size={16} className="text-ink" />
+          <span className="text-sm font-bold text-ink">Overall Progress</span>
+        </div>
+        <span className="text-2xl font-bold tracking-tight text-ink">
+          {percent}%
+        </span>
+      </div>
+
+      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-black/[0.06]">
+        <div
+          className="h-full rounded-full bg-ink transition-all duration-300"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+
+      <div className="mt-2 text-xs text-muted">
+        {done} of {total} tasks complete across all days
       </div>
     </div>
   );
