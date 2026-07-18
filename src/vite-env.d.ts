@@ -40,6 +40,13 @@ export interface ElectronAPI {
   getLogRetentionDays: () => Promise<number>;
   setLogRetentionDays: (days: number) => Promise<void>;
   exportData: () => Promise<ExportResult>;
+  saveFile: (defaultName: string, content: string) => Promise<SaveFileResult>;
+}
+
+export interface SaveFileResult {
+  canceled: boolean;
+  path?: string;
+  error?: string;
 }
 
 export interface ExportResult {

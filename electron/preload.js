@@ -26,4 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setLogRetentionDays: (days) => ipcRenderer.invoke('logs:setRetentionDays', days),
   // Export all status files and logs into a user-chosen folder.
   exportData: () => ipcRenderer.invoke('data:export'),
+  // Shows a native save dialog and writes content to the chosen file.
+  saveFile: (defaultName, content) =>
+    ipcRenderer.invoke('dialog:saveFile', defaultName, content),
 });

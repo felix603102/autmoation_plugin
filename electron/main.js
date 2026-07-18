@@ -76,6 +76,22 @@ ipcMain.handle('dialog:selectDirectory', async () => {
   return result.filePaths[0];
 });
 
+// Native save dialog — writes the given content to a user-chosen file path.
+ipcMain.handle('dialog:saveFile', async (_event, defaultName, content) => {
+  const result = await dialog.showSaveDialog({
+    defaultPath: defaultName,
+  });
+  if (result.canceled || !result.filePath) return { canceled: true };
+  try {
+    fs.writeFileSync(result.filePath, content, 'utf-8');
+    if (logger) logger.info('File saved', { path: result.filePath });
+    return { canceled: false, path: result.filePath };
+  } catch (err) {
+    console.error('[dialog:saveFile] failed:', err);
+    return { canceled: false, error: err.message };
+  }
+});
+
 // --- Logging ----------------------------------------------------------------
 
 const DEFAULT_LOGS_DIR_NAME = 'logs';

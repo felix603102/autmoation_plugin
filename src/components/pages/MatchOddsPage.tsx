@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { RefreshCw, Check, AlertTriangle, Clock, ChevronDown } from 'lucide-react';
+import { RefreshCw, Check, AlertTriangle, Clock, ChevronDown, Download } from 'lucide-react';
 import { useOddsData, getOddsData } from '../../hooks/useOddsData';
 import { CONTROLLERS } from '@shared/config';
 import { useStatus } from '../../contexts/StatusContext';
@@ -18,6 +18,53 @@ export function MatchOddsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const { data, error } = useOddsData(selected, refreshKey);
   const { flashStatus } = useStatus();
+
+  // Export odds for ALL controllers as a single CSV file via a native save dialog.
+  const exportCsv = async () => {
+    const header = [
+      'Controller',
+      'League',
+      'Kickoff',
+      'Home Team',
+      'Away Team',
+      'Bet Type',
+      'Category',
+      'Selection',
+      'Bookmaker',
+      'Correct',
+      'Status',
+    ].join(',');
+
+    const lines: string[] = [header];
+    for (const id of CONTROLLERS) {
+      const d = getOddsData(id);
+      if (!d) continue;
+      for (const m of d.markets) {
+        lines.push([
+          d.id,
+          csvEscape(d.league),
+          csvEscape(d.kickoff),
+          csvEscape(d.homeTeam),
+          csvEscape(d.awayTeam),
+          csvEscape(m.betType),
+          csvEscape(m.category),
+          csvEscape(m.selection),
+          m.bookmaker.toFixed(2),
+          m.correct.toFixed(2),
+          m.status,
+        ].join(','));
+      }
+    }
+
+    const csv = lines.join('\n');
+    const result = await window.electronAPI?.saveFile('odds-all-controllers.csv', csv);
+    if (!result || result.canceled) return;
+    if (result.error) {
+      flashStatus(`CSV export failed: ${result.error}`);
+      return;
+    }
+    flashStatus(`Odds CSV exported: ${result.path}`);
+  };
 
   // Re-read the bundled odds data for the selected match and briefly show a
   // spinning indicator so the action is visible to the user.
@@ -74,14 +121,24 @@ export function MatchOddsPage() {
           <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
             Matches
           </span>
-          <button
-            type="button"
-            onClick={refresh}
-            aria-label="Refresh odds"
-            className="rounded p-1 text-muted transition-colors hover:bg-black/5 hover:text-ink"
-          >
-            <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={exportCsv}
+              aria-label="Export all odds as CSV"
+              className="rounded p-1 text-muted transition-colors hover:bg-black/5 hover:text-ink"
+            >
+              <Download size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={refresh}
+              aria-label="Refresh odds"
+              className="rounded p-1 text-muted transition-colors hover:bg-black/5 hover:text-ink"
+            >
+              <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+            </button>
+          </div>
         </div>
         <div className="flex-1 space-y-0.5 overflow-auto px-2 pb-3">
           {CONTROLLERS.map((id) => {
@@ -233,6 +290,14 @@ export function MatchOddsPage() {
 }
 
 // --- helpers ---------------------------------------------------------------
+
+/** Escape a string for CSV: wrap in quotes if it contains comma, quote, or newline. */
+function csvEscape(value: string): string {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
 
 /** True when every market for a controller is verified (drives the green dot). */
 function isControllerComplete(id: string): boolean {
