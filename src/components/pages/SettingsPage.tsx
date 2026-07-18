@@ -6,12 +6,11 @@ import { TIMELINE_SECTIONS } from '@shared/config';
 import type { TimelineData } from '../../types';
 
 /**
- * Settings page. Lets the user choose a profile directory (via a native dialog
- * exposed through the preload bridge) and shows runtime version info.
+ * Settings page. Lets the user configure task status storage, reset timeline
+ * statuses, edit timeline dates, and view runtime version info.
  */
 export function SettingsPage() {
   const { saveAll, resetAll, saveDate } = useTaskStatus();
-  const [profileDir, setProfileDir] = useState<string>('Not set');
   const [statusDir, setStatusDir] = useState<string>('Loading…');
   const [dates, setDates] = useState<Record<string, string>>({});
   const [versions, setVersions] = useState<{
@@ -36,11 +35,6 @@ export function SettingsPage() {
     });
     Promise.all(loads).then(() => setDates(initialDates)).catch(() => {});
   }, []);
-
-  const chooseDirectory = async () => {
-    const dir = await window.electronAPI?.selectDirectory();
-    if (dir) setProfileDir(dir);
-  };
 
   const chooseStatusDirectory = async () => {
     const dir = await window.electronAPI?.selectDirectory();
@@ -83,18 +77,8 @@ export function SettingsPage() {
     <div className="flex h-full flex-col p-7">
       <h1 className="page-title mb-6">setting</h1>
 
-      {/* Profile directory picker */}
-      <div className="card max-w-2xl p-6">
-        <div className="mb-4 text-sm font-semibold text-ink">Profile</div>
-        <button type="button" onClick={chooseDirectory} className="btn-outlined inline-flex items-center gap-2">
-          <Folder size={16} />
-          Choose Profile Directory…
-        </button>
-        <p className="mt-3 break-all text-xs text-muted">Profile: {profileDir}</p>
-      </div>
-
       {/* Task status storage path */}
-      <div className="card mt-4 max-w-2xl p-6">
+      <div className="card max-w-2xl p-6">
         <div className="mb-4 text-sm font-semibold text-ink">Task Status Storage</div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={chooseStatusDirectory} className="btn-outlined inline-flex items-center gap-2">
