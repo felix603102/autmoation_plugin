@@ -57,4 +57,6 @@ export interface TaskScriptResult {
   status: TaskScriptStatus;
   data?: unknown;
   error?: string;
+  /** Epoch ms when the run finished (success or error). Used for run history. */
+  finishedAt?: number;
 }

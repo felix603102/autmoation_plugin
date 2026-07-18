@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play, RotateCcw } from 'lucide-react';
+import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play, RotateCcw, History } from 'lucide-react';
 import { useTimeline } from '../../hooks/useTimelines';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
 import type { Task, TaskScriptResult } from '../../types';
@@ -28,6 +28,22 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   // Tracks the execution state of each task's Python automation script.
   const [scriptResults, setScriptResults] = useState<Record<string, TaskScriptResult>>({});
+
+  // Hydrate per-task run history (last status + timestamp) from localStorage so
+  // the "last run" info survives reloads without a dedicated IPC/store.
+  useEffect(() => {
+    if (!timeline) return;
+    setScriptResults((prev) => {
+      const next = { ...prev };
+      for (const task of timeline.tasks) {
+        const key = `${file}:${task.id}`;
+        if (next[key]) continue; // don't clobber an in-session result
+        const saved = loadRunHistory(key);
+        if (saved) next[key] = saved;
+      }
+      return next;
+    });
+  }, [timeline, file]);
 
   // Seed state for a day the first time it is viewed, without clobbering any
   // edits the user already made on previously-opened days.
@@ -128,15 +144,15 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
     flashStatus(`Running automation: ${title}…`, 60000);
     try {
       const result = await window.electronAPI?.runTaskScript(taskId);
-      setScriptResults((prev) => ({
-        ...prev,
-        [key]: {
-          taskId,
-          status: result?.success ? 'success' : 'error',
-          data: result?.data,
-          error: result?.error,
-        },
-      }));
+      const finished: TaskScriptResult = {
+        taskId,
+        status: result?.success ? 'success' : 'error',
+        data: result?.data,
+        error: result?.error,
+        finishedAt: Date.now(),
+      };
+      setScriptResults((prev) => ({ ...prev, [key]: finished }));
+      saveRunHistory(key, finished);
       flashStatus(
         result?.success
           ? `Automation complete: ${title}`
@@ -157,14 +173,14 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
         }
       }
     } catch (err) {
-      setScriptResults((prev) => ({
-        ...prev,
-        [key]: {
-          taskId,
-          status: 'error',
-          error: err instanceof Error ? err.message : 'Unknown error',
-        },
-      }));
+      const finished: TaskScriptResult = {
+        taskId,
+        status: 'error',
+        error: err instanceof Error ? err.message : 'Unknown error',
+        finishedAt: Date.now(),
+      };
+      setScriptResults((prev) => ({ ...prev, [key]: finished }));
+      saveRunHistory(key, finished);
       flashStatus(`Automation failed: ${title}`);
     }
   };
@@ -329,6 +345,18 @@ function TaskCard({
                 <Flag size={12} />
                 {task.priority}
               </span>
+              {scriptResult?.finishedAt && (
+                <span
+                  className={`inline-flex items-center gap-1 ${
+                    scriptResult.status === 'error'
+                      ? 'text-red-500'
+                      : 'text-muted'
+                  }`}
+                >
+                  <History size={12} />
+                  Last run {formatLastRun(scriptResult.finishedAt)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -459,6 +487,49 @@ function TaskCard({
       </div>
     </div>
   );
+}
+
+/** localStorage key prefix for per-task automation run history. */
+const RUN_HISTORY_PREFIX = 'taskRun:';
+
+/** Persist a task's last automation result (status + timestamp) to localStorage. */
+function saveRunHistory(key: string, result: TaskScriptResult) {
+  try {
+    localStorage.setItem(
+      `${RUN_HISTORY_PREFIX}${key}`,
+      JSON.stringify({
+        taskId: result.taskId,
+        status: result.status,
+        error: result.error,
+        finishedAt: result.finishedAt,
+      }),
+    );
+  } catch {
+    // Ignore quota/serialization errors — run history is best-effort.
+  }
+}
+
+/** Load a task's last automation result from localStorage, if any. */
+function loadRunHistory(key: string): TaskScriptResult | null {
+  try {
+    const raw = localStorage.getItem(`${RUN_HISTORY_PREFIX}${key}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as TaskScriptResult;
+    // Only surface finished states (never a stale "running").
+    if (parsed.status === 'success' || parsed.status === 'error') return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Format an epoch-ms timestamp as a short "last run" label. */
+function formatLastRun(ms: number): string {
+  const d = new Date(ms);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}`;
 }
 
 /** Tailwind text color for a task priority (red = high, amber = medium). */
