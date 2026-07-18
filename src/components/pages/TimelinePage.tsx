@@ -142,6 +142,20 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
           ? `Automation complete: ${title}`
           : `Automation failed: ${title}`,
       );
+
+      // On success, offer to mark the task complete (unless it already is).
+      if (result?.success && !checked[key]) {
+        const confirmed = window.confirm(
+          `Automation for "${title}" succeeded. Mark this task as complete?`,
+        );
+        if (confirmed) {
+          setChecked((prev) => {
+            const next = { ...prev, [key]: true };
+            persistTaskStatus(next);
+            return next;
+          });
+        }
+      }
     } catch (err) {
       setScriptResults((prev) => ({
         ...prev,
