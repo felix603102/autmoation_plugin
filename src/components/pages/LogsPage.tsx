@@ -13,6 +13,9 @@ export function LogsPage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [category, setCategory] = useState<LogCategory>('all');
   const [loading, setLoading] = useState(false);
+  // Optional date-range bounds (YYYY-MM-DD) for filtering the date list.
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
 
   // Load available log dates on mount.
   useEffect(() => {
@@ -56,6 +59,14 @@ export function LogsPage() {
       searchTerm === '' || line.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  // Date file names are YYYY-MM-DD, so lexicographic comparison matches
+  // chronological order — no Date parsing needed for the range filter.
+  const visibleDates = dates.filter((d) => {
+    if (fromDate && d < fromDate) return false;
+    if (toDate && d > toDate) return false;
+    return true;
+  });
+
   const downloadLog = async () => {
     if (!selectedDate) return;
     const content = await window.electronAPI?.readLog(selectedDate);
@@ -80,11 +91,46 @@ export function LogsPage() {
           <div className="border-b border-hairline px-4 py-3 text-xs font-semibold text-muted">
             Available Dates
           </div>
+          {/* Date-range filter */}
+          <div className="space-y-2 border-b border-hairline px-3 py-3">
+            <label className="block text-[10px] font-medium uppercase tracking-wide text-muted">
+              From
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="mt-1 w-full rounded-md border border-hairline px-2 py-1 text-xs text-ink focus:border-ink focus:outline-none"
+              />
+            </label>
+            <label className="block text-[10px] font-medium uppercase tracking-wide text-muted">
+              To
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="mt-1 w-full rounded-md border border-hairline px-2 py-1 text-xs text-ink focus:border-ink focus:outline-none"
+              />
+            </label>
+            {(fromDate || toDate) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFromDate('');
+                  setToDate('');
+                }}
+                className="text-[11px] text-muted hover:text-ink"
+              >
+                Clear range
+              </button>
+            )}
+          </div>
           <div className="flex-1 overflow-auto">
-            {dates.length === 0 ? (
-              <div className="p-4 text-xs text-muted">No logs available</div>
+            {visibleDates.length === 0 ? (
+              <div className="p-4 text-xs text-muted">
+                {dates.length === 0 ? 'No logs available' : 'No logs in range'}
+              </div>
             ) : (
-              dates.map((date) => (
+              visibleDates.map((date) => (
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
