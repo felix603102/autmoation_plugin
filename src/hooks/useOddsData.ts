@@ -37,7 +37,10 @@ export interface VerificationSummary {
  * Returns the same shape the previous async hook did, so callers can keep
  * their loading/error handling.
  */
-export function useOddsData(controllerId: string): {
+export function useOddsData(
+  controllerId: string,
+  refreshKey = 0,
+): {
   data: OddsData | null;
   loading: boolean;
   error: Error | null;
@@ -49,7 +52,10 @@ export function useOddsData(controllerId: string): {
       loading: false,
       error: data ? null : new Error(`No odds data for ${controllerId}`),
     };
-  }, [controllerId]);
+    // refreshKey is intentionally part of the dependency list so a manual
+    // refresh recomputes the result even for the same controller.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [controllerId, refreshKey]);
 }
 
 /**

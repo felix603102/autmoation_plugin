@@ -12,7 +12,18 @@ import type { MarketStatus } from '../../types';
  */
 export function MatchOddsPage() {
   const [selected, setSelected] = useState(CONTROLLERS[0]);
-  const { data, error } = useOddsData(selected);
+  // Bumping this key forces the odds memo to recompute (a manual "refresh").
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const { data, error } = useOddsData(selected, refreshKey);
+
+  // Re-read the bundled odds data for the selected match and briefly show a
+  // spinning indicator so the action is visible to the user.
+  const refresh = () => {
+    setRefreshing(true);
+    setRefreshKey((k) => k + 1);
+    setTimeout(() => setRefreshing(false), 400);
+  };
 
   // Active category tab (Core / Corner). Reset when the match changes.
   const [activeCategory, setActiveCategory] = useState<string>('');
@@ -60,7 +71,14 @@ export function MatchOddsPage() {
           <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
             Matches
           </span>
-          <RefreshCw size={13} className="text-muted" />
+          <button
+            type="button"
+            onClick={refresh}
+            aria-label="Refresh odds"
+            className="rounded p-1 text-muted transition-colors hover:bg-black/5 hover:text-ink"
+          >
+            <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+          </button>
         </div>
         <div className="flex-1 space-y-0.5 overflow-auto px-2 pb-3">
           {CONTROLLERS.map((id) => {
