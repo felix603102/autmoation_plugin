@@ -4,11 +4,14 @@ import { Download } from 'lucide-react';
 /**
  * Logs page. Displays system and task execution logs with filtering and search.
  */
+type LogCategory = 'all' | 'app' | 'task';
+
 export function LogsPage() {
   const [dates, setDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [logContent, setLogContent] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [category, setCategory] = useState<LogCategory>('all');
   const [loading, setLoading] = useState(false);
 
   // Load available log dates on mount.
@@ -36,12 +39,22 @@ export function LogsPage() {
     loadLog().catch(() => {});
   }, [selectedDate]);
 
-  // Filter log lines by search term.
-  const filteredLines = logContent
-    .split('\n')
-    .filter((line) =>
+  // Split raw log content into lines, dropping empty trailing lines.
+  const allLines = logContent.split('\n').filter((l) => l.trim());
+
+  // Category split: [TASK] entries are task execution logs; everything else
+  // (INFO/WARN/ERROR/DEBUG) is a general app event.
+  const categoryLines = allLines.filter((line) => {
+    if (category === 'task') return line.includes('[TASK]');
+    if (category === 'app') return !line.includes('[TASK]');
+    return true;
+  });
+
+  // Search term is applied on top of the category filter.
+  const filteredLines = categoryLines.filter(
+    (line) =>
       searchTerm === '' || line.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+  );
 
   const downloadLog = async () => {
     if (!selectedDate) return;
@@ -90,6 +103,30 @@ export function LogsPage() {
 
         {/* Right main area: log content */}
         <div className="flex flex-1 flex-col gap-3 overflow-hidden">
+          {/* Category tabs */}
+          <div className="inline-flex w-fit rounded-lg border border-hairline bg-black/[0.02] p-1">
+            {(
+              [
+                { key: 'all', label: 'All' },
+                { key: 'app', label: 'App Events' },
+                { key: 'task', label: 'Task Logs' },
+              ] as { key: LogCategory; label: string }[]
+            ).map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setCategory(tab.key)}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  category === tab.key
+                    ? 'bg-white text-ink shadow-sm ring-1 ring-black/5'
+                    : 'text-muted hover:text-ink'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {/* Search and controls */}
           <div className="flex gap-2">
             <input
@@ -115,7 +152,11 @@ export function LogsPage() {
               <div className="text-muted">Loading...</div>
             ) : filteredLines.length === 0 ? (
               <div className="text-muted">
-                {searchTerm ? 'No matching log entries' : 'No log content'}
+                {searchTerm
+                  ? 'No matching log entries'
+                  : category !== 'all'
+                    ? 'No entries in this category'
+                    : 'No log content'}
               </div>
             ) : (
               <div className="space-y-1">
@@ -141,8 +182,7 @@ export function LogsPage() {
 
           {/* Stats */}
           <div className="text-xs text-muted">
-            Showing {filteredLines.filter((l) => l.trim()).length} of{' '}
-            {logContent.split('\n').filter((l) => l.trim()).length} entries
+            Showing {filteredLines.length} of {categoryLines.length} entries
           </div>
         </div>
       </div>
