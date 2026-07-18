@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play } from 'lucide-react';
+import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play, RotateCcw } from 'lucide-react';
 import { useTimeline } from '../../hooks/useTimelines';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
 import type { Task, TaskScriptResult } from '../../types';
@@ -391,7 +391,17 @@ function TaskCard({
               </div>
             ) : (
               <div>
-                <div className="font-semibold">Automation failed</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-semibold">Automation failed</div>
+                  <button
+                    type="button"
+                    onClick={onRunScript}
+                    className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <RotateCcw size={12} />
+                    Retry
+                  </button>
+                </div>
                 <div className="mt-1">{scriptResult.error}</div>
               </div>
             )}
