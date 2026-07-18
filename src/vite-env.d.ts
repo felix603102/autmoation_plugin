@@ -37,6 +37,17 @@ export interface ElectronAPI {
   listLogs: () => Promise<string[]>;
   readLog: (dateStr: string) => Promise<string | null>;
   writeLog: (level: string, message: string, data?: unknown) => Promise<void>;
+  getLogRetentionDays: () => Promise<number>;
+  setLogRetentionDays: (days: number) => Promise<void>;
+  exportData: () => Promise<ExportResult>;
+}
+
+export interface ExportResult {
+  canceled: boolean;
+  destination?: string;
+  statusFiles?: number;
+  logFiles?: number;
+  error?: string;
 }
 
 declare global {

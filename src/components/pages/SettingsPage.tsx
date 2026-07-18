@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Folder } from 'lucide-react';
+import { Folder, Download } from 'lucide-react';
 import { useTaskStatus } from '../../contexts/TaskStatusContext';
 import { useStatus } from '../../contexts/StatusContext';
 import { TIMELINES_BY_FILE } from '../../hooks/useTimelines';
@@ -15,6 +15,8 @@ export function SettingsPage() {
   const { flashStatus } = useStatus();
   const [statusDir, setStatusDir] = useState<string>('Loading…');
   const [dates, setDates] = useState<Record<string, string>>({});
+  const [retentionDays, setRetentionDays] = useState<number>(30);
+  const [exporting, setExporting] = useState(false);
   const [versions, setVersions] = useState<{
     app: string;
     chrome: string;
@@ -29,6 +31,7 @@ export function SettingsPage() {
     // Guard for running the renderer outside Electron (e.g. `vite preview`).
     window.electronAPI?.getVersions().then(setVersions).catch(() => {});
     window.electronAPI?.getStatusBasePath().then(setStatusDir).catch(() => {});
+    window.electronAPI?.getLogRetentionDays().then(setRetentionDays).catch(() => {});
 
     const initialDates: Record<string, string> = {};
     const loads = Object.keys(TIMELINES_BY_FILE).map(async (file) => {
@@ -78,6 +81,33 @@ export function SettingsPage() {
     flashStatus('Timeline date saved');
   };
 
+  const updateRetention = async (value: number) => {
+    const days = Number.isFinite(value) && value >= 0 ? value : 0;
+    setRetentionDays(days);
+    await window.electronAPI?.setLogRetentionDays(days);
+    flashStatus(
+      days > 0 ? `Log retention set to ${days} days` : 'Log retention disabled',
+    );
+  };
+
+  const exportData = async () => {
+    setExporting(true);
+    try {
+      const result = await window.electronAPI?.exportData();
+      if (!result || result.canceled) return;
+      if (result.error) {
+        flashStatus(`Export failed: ${result.error}`);
+        return;
+      }
+      flashStatus(
+        `Exported ${result.statusFiles ?? 0} status + ${result.logFiles ?? 0} log files`,
+        5000,
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col p-7">
       <h1 className="page-title mb-6">setting</h1>
@@ -117,6 +147,47 @@ export function SettingsPage() {
               />
             );
           })}
+        </div>
+      </div>
+
+      {/* Data & logs management */}
+      <div className="card mt-4 max-w-2xl p-6">
+        <div className="mb-4 text-sm font-semibold text-ink">Data &amp; Logs</div>
+
+        {/* Log retention */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-ink">Log retention</div>
+            <div className="text-xs text-muted">
+              Automatically delete logs older than this many days (0 = keep forever).
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              value={retentionDays}
+              onChange={(e) => updateRetention(parseInt(e.target.value, 10) || 0)}
+              className="w-20 rounded-md border border-hairline px-2 py-1 text-sm text-ink focus:border-ink focus:outline-none"
+            />
+            <span className="text-xs text-muted">days</span>
+          </div>
+        </div>
+
+        {/* Backup / export */}
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={exportData}
+            disabled={exporting}
+            className="btn-outlined inline-flex items-center gap-2"
+          >
+            <Download size={16} />
+            {exporting ? 'Exporting…' : 'Export Status & Logs…'}
+          </button>
+          <span className="text-xs text-muted">
+            Copies all task status files and logs into a folder you choose.
+          </span>
         </div>
       </div>
 

@@ -79,17 +79,36 @@ ipcMain.handle('dialog:selectDirectory', async () => {
 // --- Logging ----------------------------------------------------------------
 
 const DEFAULT_LOGS_DIR_NAME = 'logs';
+const LOG_RETENTION_KEY = 'logRetentionDays';
+const DEFAULT_LOG_RETENTION_DAYS = 30;
 let logger;
 
 function getLogsDir() {
   return path.join(getAppDir(), DEFAULT_LOGS_DIR_NAME);
 }
 
+/** Configured log retention in days (0 = keep forever). */
+function getLogRetentionDays() {
+  const value = store.get(LOG_RETENTION_KEY);
+  return typeof value === 'number' ? value : DEFAULT_LOG_RETENTION_DAYS;
+}
+
 function initLogger() {
   const logsDir = getLogsDir();
   logger = new Logger(logsDir);
+  // Prune old logs on startup according to the retention policy.
+  logger.cleanupOldLogs(getLogRetentionDays());
   logger.info('App started');
 }
+
+// Get/set the log retention policy (in days; 0 disables cleanup).
+ipcMain.handle('logs:getRetentionDays', () => getLogRetentionDays());
+ipcMain.handle('logs:setRetentionDays', (_event, days) => {
+  const n = Number(days);
+  store.set(LOG_RETENTION_KEY, Number.isFinite(n) && n >= 0 ? n : DEFAULT_LOG_RETENTION_DAYS);
+  // Apply immediately so the change takes effect without a restart.
+  if (logger) logger.cleanupOldLogs(getLogRetentionDays());
+});
 
 // Get logs directory path.
 ipcMain.handle('logs:getDir', () => getLogsDir());
@@ -206,6 +225,56 @@ ipcMain.handle('status:save', async (_event, file, tasksMap, date) => {
   } catch (err) {
     console.error(`[status:save] failed for ${file}:`, err);
     throw err;
+  }
+});
+
+// --- Backup / export --------------------------------------------------------
+
+/** Recursively copy a directory's contents into `dest`. Returns file count. */
+function copyDirInto(src, dest) {
+  if (!fs.existsSync(src)) return 0;
+  fs.mkdirSync(dest, { recursive: true });
+  let count = 0;
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const from = path.join(src, entry.name);
+    const to = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      count += copyDirInto(from, to);
+    } else if (entry.isFile()) {
+      fs.copyFileSync(from, to);
+      count += 1;
+    }
+  }
+  return count;
+}
+
+// Export all task status files and logs into a user-chosen folder. Creates a
+// timestamped subfolder so repeated exports don't overwrite each other.
+ipcMain.handle('data:export', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Choose a folder to export data into',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (result.canceled || result.filePaths.length === 0) {
+    return { canceled: true };
+  }
+
+  try {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
+      now.getDate(),
+    )}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const destRoot = path.join(result.filePaths[0], `fo-plugin-export-${stamp}`);
+
+    const statusFiles = copyDirInto(getStatusDir(), path.join(destRoot, 'task-status'));
+    const logFiles = copyDirInto(getLogsDir(), path.join(destRoot, 'logs'));
+
+    if (logger) logger.info('Data export complete', { destRoot, statusFiles, logFiles });
+    return { canceled: false, destination: destRoot, statusFiles, logFiles };
+  } catch (err) {
+    console.error('[data:export] failed:', err);
+    return { canceled: false, error: err.message };
   }
 });
 

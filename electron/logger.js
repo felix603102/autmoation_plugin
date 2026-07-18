@@ -72,6 +72,36 @@ class Logger {
   task(taskId, status, data) {
     this.write('TASK', `${taskId}:${status}`, data);
   }
+
+  /**
+   * Delete log files older than `days` days. A non-positive value disables
+   * cleanup (keeps everything). Returns the number of files removed.
+   */
+  cleanupOldLogs(days) {
+    if (!days || days <= 0) return 0;
+    let removed = 0;
+    try {
+      if (!fs.existsSync(this.logsDir)) return 0;
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      for (const file of fs.readdirSync(this.logsDir)) {
+        if (!file.endsWith('.log')) continue;
+        // File names are YYYY-MM-DD.log; parse the date from the name.
+        const dateStr = file.replace('.log', '');
+        const parsed = new Date(`${dateStr}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) continue;
+        if (parsed.getTime() < cutoff) {
+          fs.unlinkSync(path.join(this.logsDir, file));
+          removed += 1;
+        }
+      }
+      if (removed > 0) {
+        this.info('Log cleanup complete', { removed, retentionDays: days });
+      }
+    } catch (err) {
+      console.error('[Logger] Failed to clean up old logs:', err);
+    }
+    return removed;
+  }
 }
 
 module.exports = Logger;
