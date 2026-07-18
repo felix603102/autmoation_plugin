@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play, RotateCcw, History, Search, X } from 'lucide-react';
+import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play, RotateCcw, History, Search, X, StickyNote } from 'lucide-react';
 import { useTimeline } from '../../hooks/useTimelines';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
 import type { Task, TaskScriptResult } from '../../types';
@@ -31,6 +31,23 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
   // Search query and status filter for the task list.
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'incomplete' | 'complete'>('all');
+  // Per-task notes keyed by `${file}:${task.id}`, persisted to localStorage.
+  const [taskNotes, setTaskNotes] = useState<Record<string, string>>({});
+
+  // Hydrate per-task notes from localStorage on timeline / file change.
+  useEffect(() => {
+    if (!timeline) return;
+    setTaskNotes((prev) => {
+      const next = { ...prev };
+      for (const task of timeline.tasks) {
+        const key = `${file}:${task.id}`;
+        if (next[key] !== undefined) continue;
+        const saved = loadTaskNote(key);
+        if (saved) next[key] = saved;
+      }
+      return next;
+    });
+  }, [timeline, file]);
 
   // Hydrate per-task run history (last status + timestamp) from localStorage so
   // the "last run" info survives reloads without a dedicated IPC/store.
@@ -147,6 +164,12 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
       persistTaskStatus(next);
       return next;
     });
+  };
+
+  // Update and persist a note for a task.
+  const updateNote = (key: string, note: string) => {
+    setTaskNotes((prev) => ({ ...prev, [key]: note }));
+    saveTaskNote(key, note);
   };
 
   const toggleExpand = (key: string) =>
@@ -330,6 +353,8 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
                   toggle(`${file}:${task.id}:${subId}`)
                 }
                 onRunScript={() => runScript(task.id)}
+                note={taskNotes[`${file}:${task.id}`] ?? ''}
+                onUpdateNote={(note) => updateNote(`${file}:${task.id}`, note)}
               />
             ))}
           </div>
@@ -349,23 +374,27 @@ function TaskCard({
   isExpanded,
   isSubDone,
   scriptResult,
+  note,
   onToggle,
   onToggleExpand,
   onToggleSub,
   onRunScript,
+  onUpdateNote,
 }: {
   task: Task;
   isDone: boolean;
   isExpanded: boolean;
   isSubDone: (subId: string) => boolean;
   scriptResult?: TaskScriptResult;
+  note: string;
   onToggle: () => void;
   onToggleExpand: () => void;
   onToggleSub: (subId: string) => void;
   onRunScript: () => void;
+  onUpdateNote: (note: string) => void;
 }) {
   // Only show the expand control when there is something to reveal.
-  const hasDetail = task.subtasks.length > 0 || !!task.description;
+  const hasDetail = true;
 
   return (
     <div className="flex items-start gap-3">
@@ -500,8 +529,8 @@ function TaskCard({
           </div>
         )}
 
-        {/* Expanded detail: description + subtasks */}
-        {isExpanded && hasDetail && (
+        {/* Expanded detail: description + subtasks + notes */}
+        {isExpanded && (
           <div className="mt-3">
             {task.description && (
               <p className="text-sm leading-relaxed text-muted">
@@ -546,6 +575,21 @@ function TaskCard({
                 </div>
               </div>
             )}
+
+            {/* Per-task notes */}
+            <div className="mt-4">
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
+                <StickyNote size={12} />
+                Notes
+              </div>
+              <textarea
+                value={note}
+                onChange={(e) => onUpdateNote(e.target.value)}
+                placeholder="Add a note for this task…"
+                rows={3}
+                className="w-full resize-y rounded-lg border border-hairline bg-white px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-ink/30 focus:outline-none"
+              />
+            </div>
           </div>
         )}
       </div>
@@ -555,6 +599,27 @@ function TaskCard({
 
 /** localStorage key prefix for per-task automation run history. */
 const RUN_HISTORY_PREFIX = 'taskRun:';
+
+/** localStorage key prefix for per-task notes. */
+const TASK_NOTE_PREFIX = 'taskNote:';
+
+/** Persist a task's note to localStorage. */
+function saveTaskNote(key: string, note: string) {
+  try {
+    localStorage.setItem(`${TASK_NOTE_PREFIX}${key}`, note);
+  } catch {
+    // Ignore quota errors — notes are best-effort.
+  }
+}
+
+/** Load a task's note from localStorage, if any. */
+function loadTaskNote(key: string): string | null {
+  try {
+    return localStorage.getItem(`${TASK_NOTE_PREFIX}${key}`);
+  } catch {
+    return null;
+  }
+}
 
 /** Persist a task's last automation result (status + timestamp) to localStorage. */
 function saveRunHistory(key: string, result: TaskScriptResult) {
