@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { RefreshCw, Check, AlertTriangle, Clock, ChevronDown } from 'lucide-react';
 import { useOddsData, getOddsData } from '../../hooks/useOddsData';
 import { CONTROLLERS } from '@shared/config';
+import { useStatus } from '../../contexts/StatusContext';
 import type { MarketStatus } from '../../types';
 
 /**
@@ -16,12 +17,14 @@ export function MatchOddsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const { data, error } = useOddsData(selected, refreshKey);
+  const { flashStatus } = useStatus();
 
   // Re-read the bundled odds data for the selected match and briefly show a
   // spinning indicator so the action is visible to the user.
   const refresh = () => {
     setRefreshing(true);
     setRefreshKey((k) => k + 1);
+    flashStatus(`Refreshed odds: ${selected}`);
     setTimeout(() => setRefreshing(false), 400);
   };
 

@@ -4,6 +4,7 @@ import { useTimeline } from '../../hooks/useTimelines';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
 import type { Task, TaskScriptResult } from '../../types';
 import { useTaskStatus } from '../../contexts/TaskStatusContext';
+import { useStatus } from '../../contexts/StatusContext';
 
 interface TimelinePageProps {
   file: string; // active timeline section id, e.g. "day-1"
@@ -23,6 +24,7 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
 
   // Completion state is global so it survives tab switches and Settings visits.
   const { checked, setChecked } = useTaskStatus();
+  const { flashStatus } = useStatus();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   // Tracks the execution state of each task's Python automation script.
   const [scriptResults, setScriptResults] = useState<Record<string, TaskScriptResult>>({});
@@ -118,10 +120,12 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
   // Run the Python automation script for a given task and update the result.
   const runScript = async (taskId: string) => {
     const key = `${file}:${taskId}`;
+    const title = timeline?.tasks.find((t) => t.id === taskId)?.title ?? taskId;
     setScriptResults((prev) => ({
       ...prev,
       [key]: { taskId, status: 'running' },
     }));
+    flashStatus(`Running automation: ${title}…`, 60000);
     try {
       const result = await window.electronAPI?.runTaskScript(taskId);
       setScriptResults((prev) => ({
@@ -133,6 +137,11 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
           error: result?.error,
         },
       }));
+      flashStatus(
+        result?.success
+          ? `Automation complete: ${title}`
+          : `Automation failed: ${title}`,
+      );
     } catch (err) {
       setScriptResults((prev) => ({
         ...prev,
@@ -142,6 +151,7 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
           error: err instanceof Error ? err.message : 'Unknown error',
         },
       }));
+      flashStatus(`Automation failed: ${title}`);
     }
   };
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Folder } from 'lucide-react';
 import { useTaskStatus } from '../../contexts/TaskStatusContext';
+import { useStatus } from '../../contexts/StatusContext';
 import { TIMELINES_BY_FILE } from '../../hooks/useTimelines';
 import { TIMELINE_SECTIONS } from '@shared/config';
 import type { TimelineData } from '../../types';
@@ -11,6 +12,7 @@ import type { TimelineData } from '../../types';
  */
 export function SettingsPage() {
   const { saveAll, resetAll, saveDate } = useTaskStatus();
+  const { flashStatus } = useStatus();
   const [statusDir, setStatusDir] = useState<string>('Loading…');
   const [dates, setDates] = useState<Record<string, string>>({});
   const [versions, setVersions] = useState<{
@@ -73,6 +75,7 @@ export function SettingsPage() {
     const next = { ...dates, [file]: value };
     setDates(next);
     await saveDate(file, value || null);
+    flashStatus('Timeline date saved');
   };
 
   return (
