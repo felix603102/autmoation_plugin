@@ -4,6 +4,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
+const os = require('node:os');
 const { spawn } = require('node:child_process');
 const store = require('./store');
 const Logger = require('./logger');
@@ -58,12 +59,14 @@ function createWindow() {
 
 // --- IPC handlers -----------------------------------------------------------
 
-// Return basic app/runtime versions for the Settings page.
+// Return basic app/runtime versions plus local system info for the Settings page.
 ipcMain.handle('app:getVersions', () => ({
   app: app.getVersion(),
-  electron: process.versions.electron,
   chrome: process.versions.chrome,
-  node: process.versions.node,
+  platform: os.platform(),
+  arch: os.arch(),
+  release: os.release(),
+  hostname: os.hostname(),
 }));
 
 // Native folder picker used by the Settings "profile directory" control.

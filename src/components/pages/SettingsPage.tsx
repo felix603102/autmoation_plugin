@@ -15,9 +15,11 @@ export function SettingsPage() {
   const [dates, setDates] = useState<Record<string, string>>({});
   const [versions, setVersions] = useState<{
     app: string;
-    electron: string;
     chrome: string;
-    node: string;
+    platform: string;
+    arch: string;
+    release: string;
+    hostname: string;
   } | null>(null);
 
   // Fetch runtime versions, status path, and custom timeline dates on mount.
@@ -121,9 +123,11 @@ export function SettingsPage() {
           <div className="mb-4 text-sm font-semibold text-ink">About</div>
           <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
             <Row label="App" value={versions.app} />
-            <Row label="Electron" value={versions.electron} />
             <Row label="Chromium" value={versions.chrome} />
-            <Row label="Node" value={versions.node} />
+            <Row label="Platform" value={versions.platform} />
+            <Row label="Arch" value={versions.arch} />
+            <Row label="OS Release" value={versions.release} />
+            <Row label="Hostname" value={versions.hostname} />
           </dl>
         </div>
       )}

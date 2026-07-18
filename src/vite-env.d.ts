@@ -17,9 +17,11 @@ export interface TaskStatusFile {
 export interface ElectronAPI {
   getVersions: () => Promise<{
     app: string;
-    electron: string;
     chrome: string;
-    node: string;
+    platform: string;
+    arch: string;
+    release: string;
+    hostname: string;
   }>;
   selectDirectory: () => Promise<string | null>;
   runTaskScript: (taskId: string) => Promise<ScriptResult>;
