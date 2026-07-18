@@ -6,6 +6,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { spawn } = require('node:child_process');
 const store = require('./store');
+const Logger = require('./logger');
 
 // In dev we load Vite's dev server; in production we load the built index.html.
 const isDev = process.env.NODE_ENV === 'development';
@@ -70,6 +71,60 @@ ipcMain.handle('dialog:selectDirectory', async () => {
   const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
   if (result.canceled || result.filePaths.length === 0) return null;
   return result.filePaths[0];
+});
+
+// --- Logging ----------------------------------------------------------------
+
+const DEFAULT_LOGS_DIR_NAME = 'logs';
+let logger;
+
+function getLogsDir() {
+  return path.join(getAppDir(), DEFAULT_LOGS_DIR_NAME);
+}
+
+function initLogger() {
+  const logsDir = getLogsDir();
+  logger = new Logger(logsDir);
+  logger.info('App started');
+}
+
+// Get logs directory path.
+ipcMain.handle('logs:getDir', () => getLogsDir());
+
+// Read a specific log file by date (YYYY-MM-DD format).
+ipcMain.handle('logs:read', (_event, dateStr) => {
+  try {
+    const filePath = path.join(getLogsDir(), `${dateStr}.log`);
+    if (!fs.existsSync(filePath)) return null;
+    return fs.readFileSync(filePath, 'utf-8');
+  } catch (err) {
+    console.error(`[logs:read] failed for ${dateStr}:`, err);
+    return null;
+  }
+});
+
+// List all available log files.
+ipcMain.handle('logs:list', () => {
+  try {
+    const logsDir = getLogsDir();
+    if (!fs.existsSync(logsDir)) return [];
+    const files = fs.readdirSync(logsDir);
+    return files
+      .filter((f) => f.endsWith('.log'))
+      .map((f) => f.replace('.log', ''))
+      .sort()
+      .reverse();
+  } catch (err) {
+    console.error('[logs:list] failed:', err);
+    return [];
+  }
+});
+
+// Log an event from the renderer process.
+ipcMain.handle('logs:write', (_event, level, message, data) => {
+  if (logger) {
+    logger.write(level, message, data);
+  }
 });
 
 // --- Task status persistence ------------------------------------------------
@@ -158,6 +213,8 @@ ipcMain.handle('status:save', async (_event, file, tasksMap, date) => {
 // return it. Using a child process keeps the main app responsive and isolated
 // from automation crashes.
 ipcMain.handle('task:runScript', async (_event, taskId) => {
+  if (logger) logger.task(taskId, 'START', {});
+
   // In dev the project root is one level above the electron/ directory. In
   // production the automation scripts are bundled alongside the app resources.
   const appRoot = isDev ? path.join(__dirname, '..') : app.getAppPath();
@@ -173,6 +230,7 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
   return new Promise((resolve) => {
     let stdout = '';
     let stderr = '';
+    const startTime = Date.now();
 
     const child = spawn(process.execPath, [scriptPath, '--task-id', taskId], {
       cwd,
@@ -191,6 +249,8 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
     // Cap long-running automations (UI tasks) at 60 seconds.
     const timeout = setTimeout(() => {
       child.kill('SIGTERM');
+      const duration = Date.now() - startTime;
+      if (logger) logger.task(taskId, 'TIMEOUT', { duration });
       resolve({
         success: false,
         error: `Task '${taskId}' timed out after 60 seconds.`,
@@ -199,10 +259,12 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
 
     child.on('close', (code) => {
       clearTimeout(timeout);
+      const duration = Date.now() - startTime;
       if (stderr) {
         console.error(`[python ${taskId}]`, stderr);
       }
       if (code !== 0) {
+        if (logger) logger.task(taskId, 'FAIL', { code, duration, error: stderr });
         resolve({
           success: false,
           error: `Automation script exited with code ${code}.${stderr ? ` ${stderr.trim()}` : ''}`,
@@ -211,8 +273,10 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
       }
       try {
         const result = JSON.parse(stdout);
+        if (logger) logger.task(taskId, 'SUCCESS', { duration });
         resolve(result);
       } catch {
+        if (logger) logger.task(taskId, 'PARSE_ERROR', { duration, stdout });
         resolve({
           success: false,
           error: `Could not parse script output: ${stdout}`,
@@ -222,6 +286,8 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
 
     child.on('error', (err) => {
       clearTimeout(timeout);
+      const duration = Date.now() - startTime;
+      if (logger) logger.task(taskId, 'ERROR', { duration, error: err.message });
       resolve({
         success: false,
         error: `Failed to start Python script: ${err.message}`,
@@ -233,6 +299,7 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
 // --- App lifecycle ----------------------------------------------------------
 
 app.whenReady().then(() => {
+  initLogger();
   createWindow();
 
   // macOS: re-create a window when the dock icon is clicked and none are open.

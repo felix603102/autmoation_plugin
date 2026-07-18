@@ -31,6 +31,10 @@ export interface ElectronAPI {
     tasksMap: TaskStatusMap,
     date?: string | null,
   ) => Promise<void>;
+  getLogsDir: () => Promise<string>;
+  listLogs: () => Promise<string[]>;
+  readLog: (dateStr: string) => Promise<string | null>;
+  writeLog: (level: string, message: string, data?: unknown) => Promise<void>;
 }
 
 declare global {

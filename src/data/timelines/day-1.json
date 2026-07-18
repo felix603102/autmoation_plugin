@@ -3,16 +3,6 @@
   "date": "2026-06-25",
   "tasks": [
     {
-      "id": "smart-dashboard-wording",
-      "title": "Smart Dashboard display wording (with last update timestamp)",
-      "completed": false,
-      "dueDate": "Today",
-      "priority": "high",
-      "tag": "Dashboard",
-      "description": "Ensure the Smart Dashboard displays the correct wording along with the last update timestamp.",
-      "subtasks": []
-    },
-    {
       "id": "no-active-matches-before-dc",
       "title": "Verified No Active Matches Remain Before DC kick start",
       "completed": false,

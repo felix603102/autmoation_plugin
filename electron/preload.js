@@ -15,4 +15,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadTaskStatus: (file) => ipcRenderer.invoke('status:load', file),
   saveTaskStatus: (file, tasksMap, date) =>
     ipcRenderer.invoke('status:save', file, tasksMap, date),
+  // Logging: get logs directory, list logs, read a specific log, and write logs.
+  getLogsDir: () => ipcRenderer.invoke('logs:getDir'),
+  listLogs: () => ipcRenderer.invoke('logs:list'),
+  readLog: (dateStr) => ipcRenderer.invoke('logs:read', dateStr),
+  writeLog: (level, message, data) =>
+    ipcRenderer.invoke('logs:write', level, message, data),
 });
