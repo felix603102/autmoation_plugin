@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play, RotateCcw, History } from 'lucide-react';
+import { Check, Calendar, Flag, ChevronDown, ChevronRight, Play, RotateCcw, History, Search, X } from 'lucide-react';
 import { useTimeline } from '../../hooks/useTimelines';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
 import type { Task, TaskScriptResult } from '../../types';
@@ -28,6 +28,9 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   // Tracks the execution state of each task's Python automation script.
   const [scriptResults, setScriptResults] = useState<Record<string, TaskScriptResult>>({});
+  // Search query and status filter for the task list.
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'incomplete' | 'complete'>('all');
 
   // Hydrate per-task run history (last status + timestamp) from localStorage so
   // the "last run" info survives reloads without a dedicated IPC/store.
@@ -114,6 +117,22 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
     }
     window.electronAPI?.saveTaskStatus(file, tasksMap).catch(() => {});
   };
+
+  // Filter tasks by search query (title, description, tag) and status filter.
+  const filteredTasks = useMemo(() => {
+    if (!timeline) return [];
+    const q = searchQuery.trim().toLowerCase();
+    return timeline.tasks.filter((task) => {
+      if (statusFilter === 'complete' && !checked[`${file}:${task.id}`]) return false;
+      if (statusFilter === 'incomplete' && checked[`${file}:${task.id}`]) return false;
+      if (!q) return true;
+      return (
+        task.title.toLowerCase().includes(q) ||
+        task.description.toLowerCase().includes(q) ||
+        task.tag.toLowerCase().includes(q)
+      );
+    });
+  }, [timeline, searchQuery, statusFilter, checked, file]);
 
   const progress = useMemo(() => {
     if (!timeline) return { done: 0, total: 0, percent: 0 };
@@ -250,9 +269,54 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
             />
           </div>
 
+          {/* Search + filter controls */}
+          <div className="mt-6 flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tasks…"
+                className="w-full rounded-lg border border-hairline bg-white py-2 pl-9 pr-8 text-sm text-ink placeholder:text-muted focus:border-ink/30 focus:outline-none"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted hover:text-ink"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <div className="inline-flex gap-1 rounded-full bg-black/5 p-1">
+              {(['all', 'incomplete', 'complete'] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setStatusFilter(f)}
+                  className={`rounded-full px-3 py-1 text-xs capitalize transition-colors ${
+                    statusFilter === f
+                      ? 'bg-white font-medium text-ink shadow-sm'
+                      : 'text-muted hover:text-ink'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Task list */}
           <div className="mt-6 space-y-4">
-            {timeline.tasks.map((task) => (
+            {filteredTasks.length === 0 && (
+              <div className="py-8 text-center text-sm text-muted">
+                No tasks match your search.
+              </div>
+            )}
+            {filteredTasks.map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}
