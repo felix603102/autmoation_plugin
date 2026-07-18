@@ -1,7 +1,7 @@
 // Electron main process.
 // Responsible for creating the application window and wiring a couple of
 // lightweight IPC handlers (app metadata / folder picker) used by the renderer.
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Notification } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -209,6 +209,18 @@ ipcMain.handle('status:save', async (_event, file, tasksMap, date) => {
   }
 });
 
+// Show a native desktop notification (best-effort; silently ignored when the
+// platform does not support notifications).
+function notify(title, body) {
+  try {
+    if (Notification.isSupported()) {
+      new Notification({ title, body }).show();
+    }
+  } catch {
+    // Ignore notification failures — they must never break automation.
+  }
+}
+
 // Run the automation script for a given task in a separate Node.js process.
 // The task ID maps to a handler inside electron/automation/tasks.js which can
 // call APIs via fetch() and/or perform browser UI automation via playwright.
@@ -254,6 +266,7 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
       child.kill('SIGTERM');
       const duration = Date.now() - startTime;
       if (logger) logger.task(taskId, 'TIMEOUT', { duration });
+      notify('Automation timed out', `${taskId} exceeded 60 seconds.`);
       resolve({
         success: false,
         error: `Task '${taskId}' timed out after 60 seconds.`,
@@ -268,6 +281,7 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
       }
       if (code !== 0) {
         if (logger) logger.task(taskId, 'FAIL', { code, duration, error: stderr });
+        notify('Automation failed', `${taskId} exited with code ${code}.`);
         resolve({
           success: false,
           error: `Automation script exited with code ${code}.${stderr ? ` ${stderr.trim()}` : ''}`,
@@ -277,9 +291,11 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
       try {
         const result = JSON.parse(stdout);
         if (logger) logger.task(taskId, 'SUCCESS', { duration });
+        notify('Automation complete', `${taskId} finished in ${(duration / 1000).toFixed(1)}s.`);
         resolve(result);
       } catch {
         if (logger) logger.task(taskId, 'PARSE_ERROR', { duration, stdout });
+        notify('Automation failed', `${taskId} produced invalid output.`);
         resolve({
           success: false,
           error: `Could not parse script output: ${stdout}`,
@@ -291,6 +307,7 @@ ipcMain.handle('task:runScript', async (_event, taskId) => {
       clearTimeout(timeout);
       const duration = Date.now() - startTime;
       if (logger) logger.task(taskId, 'ERROR', { duration, error: err.message });
+      notify('Automation failed', `${taskId} could not start: ${err.message}`);
       resolve({
         success: false,
         error: `Failed to start Python script: ${err.message}`,
