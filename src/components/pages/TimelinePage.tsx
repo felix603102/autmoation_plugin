@@ -69,19 +69,30 @@ export function TimelinePage({ file, onNavigate }: TimelinePageProps) {
           if (tasksMap?.[task.id] !== undefined) {
             next[`${file}:${task.id}`] = tasksMap[task.id];
           }
+          for (const sub of task.subtasks) {
+            const subMapKey = `${task.id}:${sub.id}`;
+            if (tasksMap?.[subMapKey] !== undefined) {
+              next[`${file}:${subMapKey}`] = tasksMap[subMapKey];
+            }
+          }
         }
         return next;
       });
     }).catch(() => {});
   }, [timeline, file]);
 
-  // Persist task completion status whenever the user toggles a task.
-  // Subtask completion is intentionally not persisted (plan scope: tasks only).
+  // Persist task and subtask completion status whenever the user toggles either.
+  // Subtasks are stored under compound keys (`${task.id}:${sub.id}`) in the same
+  // flat map, keeping the on-disk format backward-compatible.
   const persistTaskStatus = (nextChecked: Record<string, boolean>) => {
     if (!timeline) return;
     const tasksMap: Record<string, boolean> = {};
     for (const task of timeline.tasks) {
       tasksMap[task.id] = !!nextChecked[`${file}:${task.id}`];
+      for (const sub of task.subtasks) {
+        const subMapKey = `${task.id}:${sub.id}`;
+        tasksMap[subMapKey] = !!nextChecked[`${file}:${subMapKey}`];
+      }
     }
     window.electronAPI?.saveTaskStatus(file, tasksMap).catch(() => {});
   };

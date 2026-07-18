@@ -51,6 +51,11 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
       for (const task of timeline.tasks) {
         const key = `${file}:${task.id}`;
         nextChecked[key] = tasksMap?.[task.id] ?? task.completed;
+        for (const sub of task.subtasks) {
+          const subMapKey = `${task.id}:${sub.id}`;
+          nextChecked[`${file}:${subMapKey}`] =
+            tasksMap?.[subMapKey] ?? sub.completed;
+        }
       }
     });
 
@@ -74,6 +79,12 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
         const key = `${file}:${task.id}`;
         tasksMap[task.id] =
           checked[key] !== undefined ? checked[key] : task.completed;
+        for (const sub of task.subtasks) {
+          const subMapKey = `${task.id}:${sub.id}`;
+          const subKey = `${file}:${subMapKey}`;
+          tasksMap[subMapKey] =
+            checked[subKey] !== undefined ? checked[subKey] : sub.completed;
+        }
       }
       const date = customDates[file] ?? null;
       saves.push(window.electronAPI.saveTaskStatus(file, tasksMap, date));
@@ -95,7 +106,9 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
         tasksMap[task.id] = false;
         nextChecked[`${file}:${task.id}`] = false;
         for (const sub of task.subtasks) {
-          nextChecked[`${file}:${task.id}:${sub.id}`] = false;
+          const subMapKey = `${task.id}:${sub.id}`;
+          tasksMap[subMapKey] = false;
+          nextChecked[`${file}:${subMapKey}`] = false;
         }
       }
       const date = customDates[file];
@@ -129,6 +142,12 @@ export function TaskStatusProvider({ children }: { children: React.ReactNode }) 
         const key = `${file}:${task.id}`;
         tasksMap[task.id] =
           loaded.tasks[task.id] ?? checked[key] ?? task.completed;
+        for (const sub of task.subtasks) {
+          const subMapKey = `${task.id}:${sub.id}`;
+          const subKey = `${file}:${subMapKey}`;
+          tasksMap[subMapKey] =
+            loaded.tasks[subMapKey] ?? checked[subKey] ?? sub.completed;
+        }
       }
       await window.electronAPI.saveTaskStatus(file, tasksMap, date);
     },
