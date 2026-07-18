@@ -29,4 +29,5 @@ export type PageId =
   | 'checklist'
   | `timeline:${string}`
   | 'match-odds'
-  | 'settings';
+  | 'settings'
+  | 'logs';

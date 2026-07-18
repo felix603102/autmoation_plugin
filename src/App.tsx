@@ -5,6 +5,7 @@ import { ChecklistDashboard } from './components/pages/ChecklistDashboard';
 import { TimelinePage } from './components/pages/TimelinePage';
 import { MatchOddsPage } from './components/pages/MatchOddsPage';
 import { SettingsPage } from './components/pages/SettingsPage';
+import { LogsPage } from './components/pages/LogsPage';
 import { type PageId } from '@shared/config';
 import { TaskStatusProvider } from './contexts/TaskStatusContext';
 
@@ -47,6 +48,9 @@ function renderPage(page: PageId, navigate: (p: PageId) => void) {
   }
   if (page === 'settings') {
     return <SettingsPage />;
+  }
+  if (page === 'logs') {
+    return <LogsPage />;
   }
   return null;
 }

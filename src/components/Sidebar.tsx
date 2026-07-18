@@ -5,6 +5,7 @@ import {
   SlidersHorizontal,
   Settings,
   ChevronDown,
+  ScrollText,
 } from 'lucide-react';
 import { TIMELINE_SECTIONS, type PageId } from '@shared/config';
 
@@ -127,6 +128,20 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
         >
           <Settings size={16} />
           <span className="flex-1 text-left">Settings</span>
+        </button>
+
+        {/* Logs */}
+        <button
+          type="button"
+          onClick={() => onNavigate('logs')}
+          className={`mt-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+            isActive('logs')
+              ? 'bg-black/[0.06] font-medium text-ink ring-1 ring-black/5'
+              : 'text-ink/80 hover:bg-black/5'
+          }`}
+        >
+          <ScrollText size={16} />
+          <span className="flex-1 text-left">Logs</span>
         </button>
       </div>
     </nav>
